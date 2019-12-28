@@ -11,6 +11,7 @@ import tornado.ioloop
 import tornado.web
 import ujson
 import uuid
+from perspective import Table, PerspectiveManager, PerspectiveTornadoHandler
 from .handlers.accounts import AccountsHandler
 from .handlers.exchanges import ExchangesHandler
 from .handlers.instruments import InstrumentsHandler
@@ -38,6 +39,11 @@ class ServerApplication(tornado.web.Application):
 
         logging.getLogger('tornado.access').disabled = False
 
+        # Perspectives
+        manager = PerspectiveManager()
+        accounts = Table([a.to_dict(True) for ex in self.te.exchanges.values() for a in ex.accounts().values()])
+        manager.host_table("accounts", accounts)
+
         if not cookie_secret:
             nonce = int(time.time() * 1000)
             encoded_payload = ujson.dumps({"nonce": nonce}).encode()
@@ -62,32 +68,7 @@ class ServerApplication(tornado.web.Application):
 
         super(ServerApplication, self).__init__(
             extra_handlers + [
-                (r"/api/v1/json/accounts", AccountsHandler, {'trading_engine': trading_engine, 'psp_kwargs': {'index': 'id'}}),
-                (r"/api/v1/arrow/accounts", AccountsHandler, {'trading_engine': trading_engine, 'psp_kwargs': {'index': 'id', 'transfer_as_arrow': True}}),
-                (r"/api/v1/json/exchanges", ExchangesHandler, {'trading_engine': trading_engine, 'psp_kwargs': {'index': 'id'}}),
-                (r"/api/v1/arrow/exchanges", ExchangesHandler, {'trading_engine': trading_engine, 'psp_kwargs': {'index': 'id', 'transfer_as_arrow': True}}),
-                (r"/api/v1/json/instruments", InstrumentsHandler, {'trading_engine': trading_engine, 'psp_kwargs': {'index': 'underlying'}}),
-                (r"/api/v1/arrow/instruments", InstrumentsHandler, {'trading_engine': trading_engine, 'psp_kwargs': {'index': 'underlying', 'transfer_as_arrow': True}}),
-                (r"/api/v1/json/strategies", StrategiesHandler, {'trading_engine': trading_engine,
-                                                                 'psp_kwargs': {'view': 'hypergrid'}}),
-                (r"/api/v1/arrow/strategies", StrategiesHandler, {'trading_engine': trading_engine,
-                                                                  'psp_kwargs': {'view': 'hypergrid', 'transfer_as_arrow': True}}),
-                (r"/api/v1/json/strategy-trade-requests", StrategyTradeRequestHandler, {'trading_engine': trading_engine,
-                                                                                        'psp_kwargs': {'index': 'time', 'view': 'hypergrid'}}),
-                (r"/api/v1/arrow/strategy-trade-requests", StrategyTradeRequestHandler, {'trading_engine': trading_engine,
-                                                                                         'psp_kwargs': {'index': 'time', 'view': 'hypergrid', 'transfer_as_arrow': True}}),
-                (r"/api/v1/json/strategy-trade-responses", StrategyTradeResponseHandler, {'trading_engine': trading_engine,
-                                                                                          'psp_kwargs': {'index': 'time', 'view': 'hypergrid'}}),
-                (r"/api/v1/arrow/strategy-trade-responses", StrategyTradeResponseHandler, {'trading_engine': trading_engine,
-                                                                                           'psp_kwargs': {'index': 'time', 'view': 'hypergrid', 'transfer_as_arrow': True}}),
-                (r"/api/v1/json/last-price-all", LastPriceHandler, {'trading_engine': trading_engine,
-                                                                    'psp_kwargs': {'index': 'instrument', 'view': 'hypergrid'}}),
-                (r"/api/v1/arrow/last-price-all", LastPriceHandler, {'trading_engine': trading_engine,
-                                                                     'psp_kwargs': {'index': 'instrument', 'view': 'hypergrid', 'transfer_as_arrow': True}}),
-                (r"/api/v1/json/trades", TradesHandler, {'trading_engine': trading_engine,
-                                                         'psp_kwargs': {'index': 'time', 'view': 'hypergrid', 'limit': 100}}),
-                (r"/api/v1/arrow/trades", TradesHandler, {'trading_engine': trading_engine,
-                                                          'psp_kwargs': {'index': 'time', 'view': 'hypergrid', 'limit': 100, 'transfer_as_arrow': True}}),
+                (r"/api/v1/ws", PerspectiveTornadoHandler, {"manager": manager, "check_origin": True}),
                 (r"/static/(.*)", tornado.web.StaticFileHandler, {"path": static}),
                 (r"/api/v1/login", LoginHandler, {}),
                 (r"/api/v1/logout", LogoutHandler, {}),
