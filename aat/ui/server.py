@@ -16,8 +16,8 @@ def serverApplication(trading_engine,
                       basepath='/',
                       apipath='/api/v1',
                       wspath='ws:0.0.0.0:{}/'):
-    root = custom_settings.pop("assets_path", os.path.join(os.path.dirname(__file__), 'assets'))
-    static = custom_settings.pop("static_path", os.path.join(root, 'static'))
+    root = (custom_settings or {}).pop("assets_path", os.path.join(os.path.dirname(__file__), 'assets'))
+    static = (custom_settings or {}).pop("static_path", os.path.join(root, 'static'))
 
     # Perspectives
     manager = PerspectiveManager()
@@ -28,7 +28,7 @@ def serverApplication(trading_engine,
 
     cookie_secret = generate_cookie_secret() if not cookie_secret else cookie_secret
 
-    handlers = extra_handlers + [
+    handlers = (extra_handlers or []) + [
         (r"/api/v1/ws", PerspectiveTornadoHandler, {"manager": manager, "check_origin": True}),
     ]
 

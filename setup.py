@@ -62,6 +62,7 @@ requires = [
     'tkp_utils>=0.1.6',
     'tornado>=5.1',
     'traitlets>=4.3.2',
+    'tqdm>=4.32.2',
     'ujson>=1.35',
     'uvloop>=0.12.2',
     'websocket-client>=0.40.0',

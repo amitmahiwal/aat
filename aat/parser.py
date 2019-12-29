@@ -207,7 +207,7 @@ def _parse_backtest_options(argv, config) -> None:
         for exchange in config.exchange_options.exchange_types:
             if exchange == ExchangeType.SYNTHETIC:
                 config.exchange_options = _parse_synthetic_config(config, argv)
-                config.exchange_options.exchange_type = ExchangeType.COINBASE
+                config.exchange_options.exchange_type = ExchangeType.SYNTHETIC
     else:
         raise ConfigException('No exchange set!')
 
