@@ -81,7 +81,7 @@ class QueryEngine(object):
     def query_lastprice(self, instrument: Instrument, exchange: ExchangeType = None) -> MarketData:
         '''get last price of asset, potentially on a given exchange'''
         if instrument not in self._last_price_by_asset_and_exchange:
-            raise QueryException('Not found!')
+            raise QueryException('Not found {}!'.format(instrument))
         if exchange:
             if exchange not in self._last_price_by_asset_and_exchange[instrument]:
                 raise QueryException('Not found!')

@@ -27,7 +27,7 @@ build: ## build the package
 	python3 setup.py build
 
 install: ## install the package
-	pip3 install .
+	python3 -m pip install .
 
 tests: ## Clean and Make unit tests
 	python3 -m pytest -v ./aat/tests --cov=aat
