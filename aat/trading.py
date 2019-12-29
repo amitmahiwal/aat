@@ -1,16 +1,19 @@
 import asyncio
 import tornado
 import uvloop
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 from .backtest import Backtest
 from .callback import Print
 from .config import TradingEngineConfig
 from .enums import TradingType, Side, CurrencyType, TradeResult
 from .execution import Execution
 from .query import QueryEngine
+from .persistence import Base
 from .risk import Risk
 from .strategy import TradingStrategy
 from .structs import TradeRequest, TradeResponse
-from .ui.server import ServerApplication
+from .ui.server import serverApplication
 from .utils import ex_type_to_ex, iterate_accounts
 from .logging import log
 
@@ -107,6 +110,11 @@ class TradingEngine(object):
         # actively trading or halted?
         self._trading = True  # type: bool
 
+        # setup sqlalachemy
+        engine = create_engine(options.sql_url, echo=False)
+        Base.metadata.create_all(engine)
+        self.sessionmaker = sessionmaker(bind=engine)
+
     def haltTrading(self):
         self._trading = False
         for strat in self.query.strategies:
@@ -139,8 +147,9 @@ class TradingEngine(object):
             loop = tornado.platform.asyncio.AsyncIOMainLoop().install()
 
             port = 8080
-            self.application = ServerApplication(self,
+            self.application = serverApplication(self,
                                                  port=port,
+                                                 sessionmaker=self.sessionmaker,
                                                  extra_handlers=self._ui_handlers,
                                                  custom_settings=self._ui_settings)
 
@@ -159,7 +168,6 @@ class TradingEngine(object):
             log.critical('')
             log.critical('Server listening on port: %s', port)
             log.critical('')
-            self.application.listen(port)
 
             # run asyncio loop
             loop.create_task(_run())
