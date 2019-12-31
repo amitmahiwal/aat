@@ -84,3 +84,4 @@ experiments
 aat_test
 docs/api
 tornado_sqlalchemy_login
+aat.db
