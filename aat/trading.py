@@ -1,6 +1,7 @@
 import asyncio
 import tornado
 import uvloop
+from perspective import Table, PerspectiveManager, PerspectiveTornadoHandler
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from .backtest import Backtest
@@ -13,7 +14,7 @@ from .persistence import Base
 from .risk import Risk
 from .strategy import TradingStrategy
 from .structs import TradeRequest, TradeResponse
-from .ui.server import serverApplication
+from .ui.server import ServerApplication
 from .utils import ex_type_to_ex, iterate_accounts
 from .logging import log
 
@@ -115,6 +116,14 @@ class TradingEngine(object):
         Base.metadata.create_all(engine)
         self.sessionmaker = sessionmaker(bind=engine)
 
+        # setup webserver
+        self.port = options.port
+
+        # setup perspectives
+        self.perspective_manager = PerspectiveManager()
+        self.sample_perspective = Table({"a": int})  # TODO remove
+        self.perspective_manager.host_table("accounts", self.sample_perspective)
+
     def haltTrading(self):
         self._trading = False
         for strat in self.query.strategies:
@@ -146,9 +155,8 @@ class TradingEngine(object):
 
             loop = tornado.platform.asyncio.AsyncIOMainLoop().install()
 
-            port = 8080
-            self.application = serverApplication(self,
-                                                 port=port,
+            self.application = ServerApplication(self,
+                                                 port=self.port,
                                                  sessionmaker=self.sessionmaker,
                                                  extra_handlers=self._ui_handlers,
                                                  custom_settings=self._ui_settings)
@@ -168,6 +176,7 @@ class TradingEngine(object):
             log.critical('')
             log.critical('Server listening on port: %s', port)
             log.critical('')
+            self.application.listen(port)
 
             # run asyncio loop
             loop.create_task(_run())

@@ -4,7 +4,7 @@
 import sys
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
-from tkp_utils.sqla.models import Base, User, APIKey  # noqa: F401
+from tornado_sqlalchemy_login.sqla.models import Base, User, APIKey  # noqa: F401
 
 
 def main(sql_url):
