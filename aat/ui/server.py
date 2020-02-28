@@ -21,8 +21,8 @@ from ..logging import log
 
 class ServerApplication(tornado.web.Application):
     def __init__(self,
-                 port,
                  trading_engine,
+                 port,
                  extra_handlers=None,
                  custom_settings=None,
                  debug=True,

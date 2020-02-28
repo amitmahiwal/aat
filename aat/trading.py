@@ -122,7 +122,7 @@ class TradingEngine(object):
 
         # setup perspectives
         self.perspective_manager = PerspectiveManager()
-        self.sample_perspective = Table({"a": int})  # TODO remove
+        self.sample_perspective = Table([{"a": 1, "b": 2}])  # TODO remove
         self.perspective_manager.host_table("accounts", self.sample_perspective)
 
     def haltTrading(self):
@@ -175,9 +175,9 @@ class TradingEngine(object):
 
             # hook in tornado to asyncio
             log.critical('')
-            log.critical('Server listening on port: %s', port)
+            log.critical('Server listening on port: %s', self.port)
             log.critical('')
-            self.application.listen(port)
+            self.application.listen(self.port)
 
             # run asyncio loop
             loop.create_task(_run())
