@@ -1,17 +1,82 @@
 import aiohttp
 from abc import abstractmethod
+from .callback import Callback
 from .data_source import StreamingDataSource
 from .define import EXCHANGE_MARKET_DATA_ENDPOINT
-from .structs import MarketData
+from .enums import TickType
 from .logging import log
+from .structs import MarketData
+from .utils import CallbackException
 
 
-class MarketData(StreamingDataSource):
+class MarketData(metaclass=ABCMeta):
     def __init__(self, *args, **kwargs) -> None:
-        super(MarketData, self).__init__()
+        self._running = False
+        self._callbacks = {TickType.TRADE: [],
+                           TickType.ERROR: [],
+                           TickType.OPEN: [],
+                           TickType.FILL: [],
+                           TickType.CANCEL: [],
+                           TickType.CHANGE: [],
+                           TickType.ANALYZE: [],
+                           TickType.HALT: [],
+                           TickType.CONTINUE: []}
         self._lastseqnum = -1
         self._missingseqnum = set()  # type: set
         self._seqnum_enabled = False
+
+    @abstractmethod
+    def receive(self):
+        '''receive data and call callbacks'''
+
+    def callback(self, field: str, data, *args, **kwargs) -> None:
+        for cb in self._callbacks[field]:
+            cb(data, *args, **kwargs)
+
+    def onTrade(self, callback: Callback) -> None:
+        self._callbacks[TickType.TRADE].append(callback)
+
+    def onOpen(self, callback: Callback) -> None:
+        self._callbacks[TickType.OPEN].append(callback)
+
+    def onFill(self, callback: Callback) -> None:
+        self._callbacks[TickType.FILL].append(callback)
+
+    def onCancel(self, callback: Callback) -> None:
+        self._callbacks[TickType.CANCEL].append(callback)
+
+    def onChange(self, callback: Callback) -> None:
+        self._callbacks[TickType.CHANGE].append(callback)
+
+    def onError(self, callback: Callback) -> None:
+        self._callbacks[TickType.ERROR].append(callback)
+
+    def onExit(self, callback: Callback) -> None:
+        self._callbacks[TickType.EXIT].append(callback)
+
+    def onAnalyze(self, callback: Callback) -> None:
+        self._callbacks[TickType.ANALYZE].append(callback)
+
+    def onHalt(self, callback: Callback) -> None:
+        self._callbacks[TickType.HALT].append(callback)
+
+    def onContinue(self, callback: Callback) -> None:
+        self._callbacks[TickType.CONTINUE].append(callback)
+
+    def registerCallback(self, callback: Callback) -> None:
+        if not isinstance(callback, Callback):
+            raise CallbackException(f'{callback} is not an instance of class Callback')
+        for att in ['onTrade',
+                    'onOpen',
+                    'onFill',
+                    'onCancel',
+                    'onChange',
+                    'onError',
+                    'onAnalyze',
+                    'onHalt',
+                    'onContinue']:
+            if hasattr(callback, att):
+                getattr(self, att)(getattr(callback, att))
 
     @abstractmethod
     def subscription(self):
