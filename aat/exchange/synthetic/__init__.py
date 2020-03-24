@@ -6,10 +6,12 @@ class SyntheticExchange(Exchange):
         pass
 
     async def connect(self):
-        pass
+        return
 
     async def tick(self):
-        pass
+        yield 'test'
+        yield 'test2'
+
 
 
 Exchange.registerExchange('synthetic', SyntheticExchange)
