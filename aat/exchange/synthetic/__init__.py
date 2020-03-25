@@ -144,7 +144,7 @@ class SyntheticExchange(Exchange):
                         if do == 'cancel':
                             orderbook.cancel(order)
                         else:
-                            order.volume = min(order.volume + choice((-1, -.5, .5, 1)), 1.0)
+                            order.volume = max(order.volume + choice((-1, -.5, .5, 1)), 1.0)
                             orderbook.add(order)
                             
                 elif levels:
@@ -155,7 +155,7 @@ class SyntheticExchange(Exchange):
                         if do == 'cancel':
                             orderbook.cancel(order)
                         else:
-                            order.volume = min(order.volume + choice((-1, -.5, .5, 1)), 1.0)
+                            order.volume = max(order.volume + choice((-1, -.5, .5, 1)), 1.0)
                             orderbook.add(order)
             print(self)
 

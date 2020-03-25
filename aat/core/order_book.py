@@ -242,14 +242,20 @@ class OrderBook(object):
 
         if side == Side.BUY:
             if price not in self._buy_levels:
-                import ipdb; ipdb.set_trace()
                 raise Exception('Orderbook out of sync!')
             self._buys[price].remove(order)
+
+            # delete level if no more volume
+            if not self._buys[price]:
+                self._buy_levels.remove(price)
         else:
             if price not in self._sell_levels:
-                import ipdb; ipdb.set_trace()
                 raise Exception('Orderbook out of sync!')
             self._sells[price].remove(order)
+
+            # delete level if no more volume
+            if not self._sells[price]:
+                self._sell_levels.remove(price)
 
     def topOfBook(self):
         '''return top of both sides
