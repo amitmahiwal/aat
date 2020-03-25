@@ -1,3 +1,4 @@
+import asyncio
 import numpy as np
 import string
 from datetime import datetime
@@ -54,13 +55,108 @@ class SyntheticExchange(Exchange):
         '''nothing to connect to'''
         self._seed()
 
+        # set callbacks to the trading engine
+        for orderbook in self._orderbooks.values():
+            orderbook.setCallback(self._callback)
+
     async def tick(self):
+
         # first return all seeded orders
         for _, orderbook in self._orderbooks.items():
             for order in orderbook:
                 yield Event(type=EventType.OPEN, target=order)
 
-        # choose a random symbol
+        # loop forever
+        while True:
+            await asyncio.sleep(.1)
+            # choose a random symbol
+            symbol = choice(list(self._instruments.keys()))
+            instrument = self._instruments[symbol]
+            orderbook = self._orderbooks[symbol]
 
+            # add a new buy order, a new sell order, or a cross
+            do = choice(('buy', 'sell', 'cross', 'cancel', 'change'))
+            levels = orderbook.topOfBook()
+            volume = round(random()*5, 0)
+
+            if do == 'buy':
+                # new buy order
+                # choose a price level
+                price = round(levels['ask'][0] - choice((.01, .05, .1, .2)), 2)
+                orderbook.add(Data(id=1,
+                                   timestamp=datetime.now().timestamp(),
+                                   volume=volume,
+                                   price=price,
+                                   side=Side.BUY,
+                                   type=DataType.ORDER,
+                                   instrument=instrument,
+                                   exchange='synthetic'))
+            elif do == 'sell':
+                # new sell order
+                price = round(levels['bid'][0] - choice((.01, .05, .1, .2)), 2)
+                orderbook.add(Data(id=1,
+                                   timestamp=datetime.now().timestamp(),
+                                   volume=volume,
+                                   price=price,
+                                   side=Side.SELL,
+                                   type=DataType.ORDER,
+                                   instrument=instrument,
+                                   exchange='synthetic'))
+            elif do == 'cross':
+                # cross the spread
+                side = choice(('buy', 'sell'))
+                if side == 'buy':
+                    # cross to buy
+                    price = round(levels['ask'][0] + choice((0.0, .01, .05)), 2)
+                    orderbook.add(Data(id=1,
+                                    timestamp=datetime.now().timestamp(),
+                                    volume=volume,
+                                    price=price,
+                                    side=Side.BUY,
+                                    type=DataType.ORDER,
+                                    instrument=instrument,
+                                    exchange='synthetic'))
+                else:
+                    # cross to sell
+                    price = round(levels['bid'][0] - choice((0.0, .01, .05)), 2)
+                    orderbook.add(Data(id=1,
+                                    timestamp=datetime.now().timestamp(),
+                                    volume=volume,
+                                    price=price,
+                                    side=Side.SELL,
+                                    type=DataType.ORDER,
+                                    instrument=instrument,
+                                    exchange='synthetic'))
+            elif do == 'cancel' or do == 'change':
+                # cancel an existing order
+                side = choice(('buy', 'sell'))
+                levels = orderbook.levels(5)
+                if side == 'buy' and levels:
+                    level = choice(levels['bid'])
+                    price_levels = orderbook.level(price=level[0])[1]
+                    if price_levels is None:
+                        continue
+
+                    orders = price_levels[0]._orders
+                    if orders:
+                        order = choice(orders)
+
+                        if do == 'cancel':
+                            orderbook.cancel(order)
+                        else:
+                            order.volume = min(order.volume + choice((-1, -.5, .5, 1)), 1.0)
+                            orderbook.add(order)
+                            
+                elif levels:
+                    level = choice(levels['ask'])
+                    orders = orderbook.level(price=level[0])[0][0]._orders
+                    if orders:
+                        order = choice(orders)
+                        if do == 'cancel':
+                            orderbook.cancel(order)
+                        else:
+                            order.volume = min(order.volume + choice((-1, -.5, .5, 1)), 1.0)
+                            orderbook.add(order)
+            print(self)
 
 Exchange.registerExchange('synthetic', SyntheticExchange)

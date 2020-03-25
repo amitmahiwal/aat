@@ -17,10 +17,13 @@ def _insort(a, x):
 
 
 class _PriceLevel(object):
-    def __init__(self, price, on_event):
+    def __init__(self, price, callback):
         self._price = price
         self._orders = deque()
-        self._on_event = on_event
+        self._on_event = callback
+
+    def setCallback(self, callback):
+        self._on_event = callback
 
     def price(self):
         return self._price
@@ -30,8 +33,12 @@ class _PriceLevel(object):
 
     def add(self, order):
         # append order to deque
-        self._orders.append(order)
-        self._on_event(Event(type=EventType.OPEN, target=order))
+        if order in self._orders:
+            # change event
+            self._on_event(Event(type=EventType.CHANGE, target=order))
+        else:
+            self._orders.append(order)
+            self._on_event(Event(type=EventType.OPEN, target=order))
 
     def remove(self, order):
         # check if order is in level
@@ -49,6 +56,10 @@ class _PriceLevel(object):
         return order
 
     def cross(self, taker_order):
+        if taker_order.filled >= taker_order.volume:
+            # already filled:
+            return None
+
         while taker_order.filled < taker_order.volume and self._orders:
             # need to fill original volume - filled so far
             to_fill = taker_order.volume - taker_order.filled
@@ -87,7 +98,7 @@ class _PriceLevel(object):
             # execute the taker order
             self._on_event(Event(type=EventType.TRADE,
                                  target=Trade(timestamp=datetime.now().timestamp(),
-                                              instrument=maker_order.instrument,
+                                              instrument=taker_order.instrument,
                                               price=maker_order.price,
                                               volume=to_fill,
                                               side=taker_order.side,
@@ -128,6 +139,13 @@ class OrderBook(object):
 
         # setup callback
         self._callback = callback
+
+    def setCallback(self, callback):
+        self._callback = callback
+        for sell_level in self._sell_levels:
+            self._sells[sell_level].setCallback(callback)
+        for buy_level in self._buy_levels:
+            self._buys[buy_level].setCallback(callback)
 
     def add(self, order):
         '''add a new order to the order book, potentially triggering events:
@@ -219,6 +237,19 @@ class OrderBook(object):
         Args:
             order (Data): order to submit to orderbook
         '''
+        price = order.price
+        side = order.side
+
+        if side == Side.BUY:
+            if price not in self._buy_levels:
+                import ipdb; ipdb.set_trace()
+                raise Exception('Orderbook out of sync!')
+            self._buys[price].remove(order)
+        else:
+            if price not in self._sell_levels:
+                import ipdb; ipdb.set_trace()
+                raise Exception('Orderbook out of sync!')
+            self._sells[price].remove(order)
 
     def topOfBook(self):
         '''return top of both sides
@@ -231,19 +262,34 @@ class OrderBook(object):
         return {'bid': (self._buy_levels[-1], self._buys[self._buy_levels[-1]].volume()) if len(self._buy_levels) > 0 else (0, 0),
                 'ask': (self._sell_levels[0], self._sells[self._sell_levels[0]].volume()) if len(self._sell_levels) > 0 else (float('inf'), 0)}
 
-    def level(self, level=0, side=None):
+    def spread(self):
+        '''return the spread
+
+        Args:
+
+        Returns:
+            value (float): spread between bid and ask
+        '''
+        tob = self.topOfBook()
+        return tob['ask'] - tob['bid']
+
+    def level(self, level=0, price=None, side=None):
         '''return book level
         
         Args:
             level (int): depth of book to return
+            price (float): price level to look for
             side (Side): side to return, or None to return both
         Returns:
             value (tuple): returns ask or bid if Side specified, otherwise ask,bid
         '''
         # collect bids and asks at `level`
-        bid = (self._buy_levels[-level], self._buys[self._buy_levels[-level]].volume()) if len(self._buy_levels) > level else None
-        ask = (self._sell_levels[level], self._sells[self._sell_levels[level]].volume()) if len(self._sell_levels) > level else None
-
+        if price:
+            bid = (self._buys[price], self._buys[price].volume()) if price in self._buy_levels else None
+            ask = (self._sells[price], self._sells[price].volume()) if price in self._sell_levels else None
+        else:
+            bid = (self._buy_levels[-level], self._buys[self._buy_levels[-level]].volume()) if len(self._buy_levels) > level else None
+            ask = (self._sell_levels[level], self._sells[self._sell_levels[level]].volume()) if len(self._sell_levels) > level else None
 
         if side == Side.SELL:
             return ask
@@ -336,11 +382,11 @@ class OrderBook(object):
             if isinstance(item, list):
                 # just aggregate these upper levels
                 if len(item) > 1:
-                    ret += f'\t\t{item[0].price()} - {item[-1].price()}\t{sum(i.volume() for i in item)}'
+                    ret += f'\t\t{item[0].price():.2f} - {item[-1].price():.2f}\t{sum(i.volume() for i in item):.2f}'
                 else:
-                    ret += f'\t\t{item[0].price()}\t\t{item[0].volume()}'
+                    ret += f'\t\t{item[0].price():.2f}\t\t{item[0].volume():.2f}'
             else:
-                ret += f'\t\t{item.price()}\t\t{item.volume()}'
+                ret += f'\t\t{item.price():.2f}\t\t{item.volume():.2f}'
             ret += '\n'
 
         ret += '-----------------------------------------------------\n'
@@ -350,11 +396,11 @@ class OrderBook(object):
             if isinstance(item, list):
                 # just aggregate these lower levels
                 if len(item) > 1:
-                    ret += f'{sum(i.volume() for i in item)}\t\t{item[0].price()} - {item[-1].price()}\t'
+                    ret += f'{sum(i.volume() for i in item):.2f}\t\t{item[0].price():.2f} - {item[-1].price():.2f}\t'
                 else:
-                    ret += f'{item[0].volume()}\t\t{item[0].price()}'
+                    ret += f'{item[0].volume():.2f}\t\t{item[0].price():.2f}'
             else:
-                ret += f'{item.volume()}\t\t{item.price()}'
+                ret += f'{item.volume():.2f}\t\t{item.price():.2f}'
             ret += '\n'
 
         return ret

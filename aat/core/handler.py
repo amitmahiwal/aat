@@ -1,5 +1,5 @@
 from ..config import EventType
-from ..core import Data
+from ..core import Event
 from abc import ABCMeta, abstractmethod
 from inspect import isabstract
 
@@ -26,41 +26,41 @@ class EventHandler(metaclass=ABCMeta):
             .get(event_type, None)
 
     @abstractmethod
-    def onTrade(self, data: Data):
+    def onTrade(self, event: Event):
         '''onTrade'''
 
     @abstractmethod
-    def onOpen(self, data: Data):
+    def onOpen(self, event: Event):
         '''onOpen'''
 
     @abstractmethod
-    def onCancel(self, data: Data):
+    def onCancel(self, event: Event):
         '''onCancel'''
 
     @abstractmethod
-    def onChange(self, data: Data):
+    def onChange(self, event: Event):
         '''onChange'''
 
     @abstractmethod
-    def onFill(self, resp: Data):
+    def onFill(self, resp: Event):
         '''onFill'''
 
     @abstractmethod
-    def onData(self, data: Data):
+    def onData(self, event: Event):
         '''onData'''
 
     @abstractmethod
-    def onHalt(self, data):
+    def onHalt(self, event):
         '''onHalt'''
         pass
 
     @abstractmethod
-    def onContinue(self, data):
+    def onContinue(self, event):
         '''onContinue'''
         pass
 
     @abstractmethod
-    def onError(self, data: Data):
+    def onError(self, event: Event):
         '''onError'''
         pass
 
@@ -79,46 +79,46 @@ class EventHandler(metaclass=ABCMeta):
         pass
 
 class PrintHandler(EventHandler):
-    def onTrade(self, data: Data):
+    def onTrade(self, event: Event):
         '''onTrade'''
-        print(data)
+        print(event)
 
-    def onOpen(self, data: Data):
+    def onOpen(self, event: Event):
         '''onOpen'''
-        print(data)
+        print(event)
 
-    def onCancel(self, data: Data):
+    def onCancel(self, event: Event):
         '''onCancel'''
-        print(data)
+        print(event)
 
-    def onChange(self, data: Data):
+    def onChange(self, event: Event):
         '''onChange'''
-        print(data)
+        print(event)
 
-    def onFill(self, data: Data):
+    def onFill(self, event: Event):
         '''onFill'''
-        print(data)
+        print(event)
 
-    def onData(self, data: Data):
+    def onData(self, event: Event):
         '''onData'''
-        print(data)
+        print(event)
 
-    def onHalt(self, data: Data):
+    def onHalt(self, event: Event):
         '''onHalt'''
-        print(data)
+        print(event)
 
-    def onContinue(self, data: Data):
+    def onContinue(self, event: Event):
         '''onContinue'''
-        print(data)
+        print(event)
 
-    def onError(self, data: Data):
+    def onError(self, event: Event):
         '''onError'''
-        print(data)
+        print(event)
 
-    def onStart(self, data: Data):
+    def onStart(self, event: Event):
         '''onStart'''
-        print(data)
+        print(event)
 
-    def onExit(self, data: Data):
+    def onExit(self, event: Event):
         '''onExit'''
-        print(data)
+        print(event)
