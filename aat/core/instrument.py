@@ -6,4 +6,4 @@ class Instrument(object):
         self._type = type
 
     def __repr__(self):
-        return f'<{self._name}-{self._type}>'
+        return f'({self._name}-{self._type})'
