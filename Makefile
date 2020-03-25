@@ -17,10 +17,10 @@ tests: ## Clean and Make unit tests
 	python3 -m pytest -vvv ./aat/tests --cov=aat --junitxml=python_junit.xml --cov-report=xml --cov-branch
 
 lint: ## run linter
-	python3 -m flake8 aat 
+	python3 -m flake8 aat setup.py
 
 fix:  ## run autopep8/tslint fix
-	python3 -m autopep8 --in-place -r -a -a aat/
+	python3 -m autopep8 --in-place -r -a -a aat/ setup.py
 
 docs:  ## Build the sphinx docs
 	make -C docs html

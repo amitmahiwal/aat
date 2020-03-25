@@ -86,3 +86,4 @@ docs/api
 docs/index.md
 tornado_sqlalchemy_login
 aat.db
+python_junit.xml

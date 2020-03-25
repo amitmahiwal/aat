@@ -1,8 +1,12 @@
 import asyncio
+import uvloop
 from aiostream.stream import merge
 from traitlets.config.application import Application
 from traitlets import validate, TraitError, Unicode, Bool, List, Instance
+from ..config import EventType
+from ..core import EventHandler, PrintHandler, Event
 from ..exchange import Exchange
+from ..strategy import Strategy
 
 
 class TradingEngine(Application):
@@ -15,6 +19,8 @@ class TradingEngine(Application):
     trading_type = Unicode(default_value='simulation')
     exchanges = List(trait=Instance(klass=Exchange))
     event_loop = Instance(klass=asyncio.events.AbstractEventLoop)
+
+    event_handlers = List(trait=Instance(EventHandler), default_value=[])
 
     aliases = {
         'port': 'AAT.port',
@@ -37,23 +43,85 @@ class TradingEngine(Application):
     def __init__(self, **config):
         self.verbose = bool(config.get('general', {}).get('verbose', False))
         self.trading_type = config.get('general', {}).get('trading_type', 'simulation')
-        self.exchanges = [Exchange.exchanges(_.lower())(self) for _ in config.get('exchange', {}).get('exchanges', [])]
+        self.exchanges = [Exchange.exchanges(_.lower())(self.tick) for _ in config.get('exchange', {}).get('exchanges', [])]
 
+        # set event loop to use uvloop
+        asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+
+        # install event loop
         self.event_loop = asyncio.get_event_loop()
 
+        # setup subscriptions
+        self._subscriptions = {m: [] for m in EventType.keys()}
+
+        # install print handler if verbose
+        if self.verbose:
+            self.registerHandler(PrintHandler())
+
+    def registerHandler(self, handler):
+        '''register a handler and all callbacks that handler implements
+
+        Args:
+            handler (EventHandler): the event handler to register
+        Returns:
+            value (EventHandler or None): event handler if its new, else None
+        '''
+        if handler not in self.event_handlers:
+            # append to handler list
+            self.event_handlers.append(handler)
+
+            # register callbacks for event types
+            for type in EventType.keys():
+                # get callback, could be none if not implemented
+                cb = handler.callback(type)
+                if cb:
+                    self.registerCallback(type, cb)
+            return handler
+        return None
+
+    def registerCallback(self, event_type, callback):
+        '''register a callback for a given event type
+
+        Args:
+            event_type (EventType): event type enum value to register
+            callback (function): function to call on events of `event_type`
+        Returns:
+            value (bool): True if registered (new), else False
+        '''
+        if callback not in self._subscriptions[event_type]:
+            self._subscriptions[event_type].append(callback)
+            return True
+        return False
+
     async def run(self):
+        '''run the engine'''
+        # await all connections
         await asyncio.gather(*(asyncio.create_task(exch.connect()) for exch in self.exchanges))
 
+        # send start event to all callbacks
+        self.tick(Event(type=EventType.START, target=None))
+
         async with merge(*(exch.tick() for exch in self.exchanges)).stream() as stream:
-            async for message in stream:
-                print(message)
+            async for event in stream:
+                self.tick(event)
+
+    def tick(self, event):
+        '''send an event to all registered event handlers
+
+        Arguments:
+            event (Event): event to send
+        '''
+        for handler in self._subscriptions[event.type]:
+            handler(event)
 
     def start(self):
         try:
-            if self.event_loop.is_running():
-                # return future
-                return asyncio.create_task(self.run())
+            # if self.event_loop.is_running():
+            #     # return future
+            #     return asyncio.create_task(self.run())
             # block until done
-            return self.event_loop.run_until_complete(self.run())
+            self.event_loop.run_until_complete(self.run())
         except KeyboardInterrupt:
-            return
+            pass
+        # send exit event to all callbacks
+        self.tick(Event(type=EventType.EXIT, target=None))

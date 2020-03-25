@@ -72,10 +72,9 @@ class ServerApplication(tornado.web.Application):
                     d.update(handler[2])
                     default_handlers[i] = (handler[0], handler[1], d)
             if not override:
-                default_handlers.append(handler)                
+                default_handlers.append(handler)
 
         super(ServerApplication, self).__init__(default_handlers,
                                                 login_manager=SQLAlchemyLoginManager(trading_engine.sessionmaker,
                                                                                      sqlalchemy_login_config),
                                                 **settings)
-

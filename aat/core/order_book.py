@@ -26,10 +26,27 @@ class _PriceLevel(object):
         return self._price
 
     def volume(self):
-        return sum((x.volume-x.filled) for x in self._orders)
+        return sum((x.volume - x.filled) for x in self._orders)
 
     def add(self, order):
+        # append order to deque
         self._orders.append(order)
+        self._on_event(Event(type=EventType.OPEN, target=order))
+
+    def remove(self, order):
+        # check if order is in level
+        if order.price != self._price or order not in self._orders:
+            # something is wrong
+            raise Exception(f'Order not found in price leve {self._price}: {order}')
+
+        # remove order
+        self._orders.remove(order)
+
+        # trigger cancel event
+        self._on_event(Event(type=EventType.CANCEL, target=order))
+
+        # return the order
+        return order
 
     def cross(self, taker_order):
         while taker_order.filled < taker_order.volume and self._orders:
@@ -84,8 +101,13 @@ class _PriceLevel(object):
         return taker_order
 
     def __bool__(self):
+        '''use deque size as truth value'''
         return len(self._orders) > 0
 
+    def __iter__(self):
+        '''iterate through orders'''
+        for order in self._orders:
+            yield order
 
 class OrderBook(object):
     def __init__(self,
@@ -108,7 +130,13 @@ class OrderBook(object):
         self._callback = callback
 
     def add(self, order):
-        '''add a new order to the order book, potentially triggering events'''
+        '''add a new order to the order book, potentially triggering events:
+            EventType.TRADE: if this order crosses the book and fills orders
+            EventType.FILL: if this order crosses the book and fills orders
+            EventType.CHANGE: if this order crosses the book and partially fills orders
+        Args:
+            order (Data): order to submit to orderbook
+        '''
         if order.side == Side.BUY:
             # order is buy, so look at top of sell side
             top = self._sell_levels[0] if len(self._sell_levels) > 0 else float('inf')
@@ -133,7 +161,6 @@ class OrderBook(object):
                     # level cleared exactly
                     cleared.append(top)
                 break
-                
 
             # clear levels
             self._sell_levels = self._sell_levels[len(cleared):]
@@ -164,7 +191,7 @@ class OrderBook(object):
                 if trade:
                     # clear sell level
                     cleared.append(top)
-                    top = self._buy_levels[-1-len(cleared)] if len(self._buy_levels) > len(cleared) else 0
+                    top = self._buy_levels[-1 - len(cleared)] if len(self._buy_levels) > len(cleared) else 0
                     continue
 
                 # trade is done, check if level was cleared exactly
@@ -172,7 +199,7 @@ class OrderBook(object):
                     # level cleared exactly
                     cleared.append(top)
                 break
-                
+
             # clear levels
             self._buy_levels = self._buy_levels[:-len(cleared)] if len(cleared) else self._buy_levels
 
@@ -187,10 +214,73 @@ class OrderBook(object):
                 self._sells[order.price].add(order)
 
     def cancel(self, order):
-        pass
+        '''remove an order from the order book, potentially triggering events:
+            EventType.CANCEL: the cancel event for this
+        Args:
+            order (Data): order to submit to orderbook
+        '''
 
-    def execute(self, maker_order, taker_order):
-        pass
+    def topOfBook(self):
+        '''return top of both sides
+        
+        Args:
+            
+        Returns:
+            value (dict): returns {'bid': tuple, 'ask': tuple}
+        '''
+        return {'bid': (self._buy_levels[-1], self._buys[self._buy_levels[-1]].volume()) if len(self._buy_levels) > 0 else (0, 0),
+                'ask': (self._sell_levels[0], self._sells[self._sell_levels[0]].volume()) if len(self._sell_levels) > 0 else (float('inf'), 0)}
+
+    def level(self, level=0, side=None):
+        '''return book level
+        
+        Args:
+            level (int): depth of book to return
+            side (Side): side to return, or None to return both
+        Returns:
+            value (tuple): returns ask or bid if Side specified, otherwise ask,bid
+        '''
+        # collect bids and asks at `level`
+        bid = (self._buy_levels[-level], self._buys[self._buy_levels[-level]].volume()) if len(self._buy_levels) > level else None
+        ask = (self._sell_levels[level], self._sells[self._sell_levels[level]].volume()) if len(self._sell_levels) > level else None
+
+
+        if side == Side.SELL:
+            return ask
+        elif side == Side.BUY:
+            return bid
+        return ask, bid
+
+    def levels(self, levels=0):
+        '''return book levels starting at top
+        
+        Args:
+            levels (int): number of levels to return
+        Returns:
+            value (dict of list): returns {"ask": [levels in order], "bid": [levels in order]} for `levels` number of levels
+        '''
+        if levels <= 0:
+            return self.topOfBook()
+
+        ret = self.topOfBook()
+        ret['bid'] = [ret['bid']]
+        ret['ask'] = [ret['ask']]
+        for _ in range(levels):
+            ask, bid = self.level(_)
+            if ask:
+                ret['ask'].append(ask)
+            if bid:
+                ret['bid'].append(bid)
+        return ret
+
+    def __iter__(self):
+        '''iterate through asks then bids by level'''
+        for level in self._sell_levels:
+            for order in self._sells[level]:
+                yield order
+        for level in self._buy_levels:
+            for order in self._buys[level]:
+                yield order
 
     def __repr__(self):
         ret = ''
@@ -241,8 +331,10 @@ class OrderBook(object):
         # if you hit a list, give aggregate
         ret = ''
 
+        # format the sells on top, tabbed to the right, with price\tvolume
         for item in sells:
             if isinstance(item, list):
+                # just aggregate these upper levels
                 if len(item) > 1:
                     ret += f'\t\t{item[0].price()} - {item[-1].price()}\t{sum(i.volume() for i in item)}'
                 else:
@@ -253,8 +345,10 @@ class OrderBook(object):
 
         ret += '-----------------------------------------------------\n'
 
+        # format the buys on bottom, tabbed to the left, with volume\tprice so prices align
         for item in buys:
             if isinstance(item, list):
+                # just aggregate these lower levels
                 if len(item) > 1:
                     ret += f'{sum(i.volume() for i in item)}\t\t{item[0].price()} - {item[-1].price()}\t'
                 else:

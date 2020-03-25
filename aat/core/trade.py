@@ -28,4 +28,3 @@ class Trade(BaseModel):
 
     def __lt__(self, other):
         return self.price < other.price
-

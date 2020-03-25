@@ -1,5 +1,6 @@
 from ..config import InstrumentType
 
+
 class Instrument(object):
     def __init__(self, name, type=InstrumentType.EQUITY):
         self._name = name

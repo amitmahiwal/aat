@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from typing import Any
 from ..config import Side, DataType, EventType
-from ..core import Instrument
+from .instrument import Instrument
 
 
 class Event(BaseModel):
@@ -44,4 +44,3 @@ class Data(BaseModel):
 
     def __lt__(self, other):
         return self.price < other.price
-

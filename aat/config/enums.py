@@ -7,6 +7,10 @@ class BaseEnum(Enum):
     def members(cls):
         return cls.__members__.keys()
 
+    @classmethod
+    def keys(cls):
+        return cls.__members__.values()
+
     def __str__(self):
         return f'{self.value}'
 
@@ -18,6 +22,7 @@ class InstrumentType(BaseEnum):
     # BOND = 'BOND'
     # OPTION = 'OPTION'
     # FUTURE = 'FUTURE'
+
 
 class Side(BaseEnum):
     BUY = 'BUY'
@@ -43,7 +48,9 @@ class EventType(BaseEnum):
 
     # Engine events
     ERROR = 'ERROR'
+    START = 'START'
     EXIT = 'EXIT'
+
 
 class DataType(BaseEnum):
     ORDER = 'ORDER'
