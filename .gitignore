@@ -59,7 +59,9 @@ target/
 horizon
 
 *.DS_Store
-dashboard_server/node_modules/
+js/node_modules/
+js/build/
+aat/ui/assets/static/
 notes.txt
 ref
 coinbase.sh

@@ -1,12 +1,17 @@
 import asyncio
+import os.path
 import uvloop
 from aiostream.stream import merge
 from traitlets.config.application import Application
 from traitlets import validate, TraitError, Unicode, Bool, List, Instance
+from tornado.web import StaticFileHandler, RedirectHandler, Application as TornadoApplication
+from perspective import PerspectiveManager, PerspectiveTornadoHandler
+
 from ..config import EventType
-from ..core import EventHandler, PrintHandler, Event
+from ..core import Event, EventHandler, PrintHandler, TableHandler
 from ..exchange import Exchange
 from ..strategy import Strategy
+from ..ui import ServerApplication
 
 
 class TradingEngine(Application):
@@ -15,12 +20,16 @@ class TradingEngine(Application):
     description = 'async algorithmic trading engine'
 
     verbose = Bool(default_value=True)
+    api = Bool(default_value=True)
     port = Unicode(default_value='8080', help="Port to run on").tag(config=True)
     trading_type = Unicode(default_value='simulation')
     exchanges = List(trait=Instance(klass=Exchange))
     event_loop = Instance(klass=asyncio.events.AbstractEventLoop)
 
     event_handlers = List(trait=Instance(EventHandler), default_value=[])
+    api_application = Instance(klass=TornadoApplication)
+    api_handlers = List(default_value=[])
+    table_manager = Instance(klass=PerspectiveManager, args=(), kwargs={})
 
     aliases = {
         'port': 'AAT.port',
@@ -41,9 +50,11 @@ class TradingEngine(Application):
         return proposal['value']
 
     def __init__(self, **config):
-        self.verbose = bool(config.get('general', {}).get('verbose', False))
+        self.port = config.get('general', {}).get('port', self.port)
+        self.verbose = bool(int(config.get('general', {}).get('verbose', self.verbose)))
+        self.api = bool(int(config.get('general', {}).get('api', self.api)))
         self.trading_type = config.get('general', {}).get('trading_type', 'simulation')
-        self.exchanges = [Exchange.exchanges(_.lower())(self.tick) for _ in config.get('exchange', {}).get('exchanges', [])]
+        self.exchanges = [Exchange.exchanges(_.lower())(self.tick, verbose=self.verbose) for _ in config.get('exchange', {}).get('exchanges', [])]
 
         # set event loop to use uvloop
         asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
@@ -57,6 +68,23 @@ class TradingEngine(Application):
         # install print handler if verbose
         if self.verbose:
             self.registerHandler(PrintHandler())
+
+        # install webserver
+        if self.api:
+            table_handler = TableHandler()
+            table_handler.installTables(self.table_manager)
+            self.registerHandler(table_handler)
+            self.api_handlers.append((r"/", RedirectHandler, {"url": "/index.html"}))
+            self.api_handlers.append((r"/api/v1/ws", PerspectiveTornadoHandler, {"manager": self.table_manager, "check_origin": True}))
+            self.api_handlers.append((r"/static/js/(.*)", StaticFileHandler, {"path": os.path.join(os.path.dirname(__file__), '..', 'ui', 'assets', 'static', 'js')}))
+            self.api_handlers.append((r"/static/css/(.*)", StaticFileHandler, {"path": os.path.join(os.path.dirname(__file__), '..', 'ui', 'assets', 'static', 'css')}))
+            self.api_handlers.append((r"/static/fonts/(.*)", StaticFileHandler, {"path": os.path.join(os.path.dirname(__file__), '..', 'ui', 'assets', 'static', 'fonts')}))
+            self.api_handlers.append((r"/(.*)", StaticFileHandler, {"path": os.path.join(os.path.dirname(__file__), '..', 'ui', 'assets', 'static', 'html')}))
+            self.api_application = ServerApplication(handlers=self.api_handlers)
+            print('.......')
+            print(f'listening on 0.0.0.0:{self.port}')
+            print('.......')
+            self.api_application.listen(self.port)
 
     def registerHandler(self, handler):
         '''register a handler and all callbacks that handler implements

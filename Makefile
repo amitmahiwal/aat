@@ -10,6 +10,9 @@ buildext: ## build the package extensions
 build: ## build the package
 	python3 setup.py build
 
+js:  ## build the js assets
+	cd js && yarn build
+
 install: ## install the package
 	python3 -m pip install .
 
@@ -46,4 +49,4 @@ help:
 print-%:
 	@echo '$*=$($*)'
 
-.PHONY: clean run runconfig sandbox backtest backtest_config test tests test_verbose help install docs data dist js build buildext boost
+.PHONY: run buildext build js install tests lint fix docs dist clean help

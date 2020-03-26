@@ -1,9 +1,8 @@
 import bisect
 from collections import deque
 from datetime import datetime
-from .trade import Trade
+from .models import Data, Event, Trade
 from ..config import Side, EventType, DataType
-from .data import Data, Event
 
 
 def _insort(a, x):

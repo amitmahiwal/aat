@@ -1,5 +1,5 @@
 from ..config import EventType
-from ..core import Event
+from .models import Event
 from abc import ABCMeta, abstractmethod
 from inspect import isabstract
 

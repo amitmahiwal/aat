@@ -74,3 +74,37 @@ class TestOrderBook:
         assert ob.topOfBook() == {"bid": (4.0, 1.0), "ask": (6.0, 1.0)}
         print(ob.levels(3))
         assert ob.levels(3) == {'bid': [(4.0, 1.0), (0.5, 1.0), (4.0, 1.0), (3.5, 1.0)], 'ask': [(6.0, 1.0), (6.0, 1.0), (6.5, 1.0), (7.0, 1.0)]}
+
+    def test_order_book_market_order(self):
+        ob = OrderBook(_INSTRUMENT)
+
+        x = .5
+        while x < 10.0:
+            side = Side.BUY if x <= 5 else Side.SELL
+            ob.add(Data(id=1,
+                        timestamp=datetime.now().timestamp(),
+                        volume=1.0,
+                        price=x,
+                        side=side,
+                        type=DataType.ORDER,
+                        instrument=_INSTRUMENT,
+                        exchange=''))
+            x += .5
+
+        assert ob.topOfBook()['bid'] == (5.0, 1.0)
+        assert ob.topOfBook()['ask'] == (5.5, 1.0)
+
+        data = Data(id=1,
+                    timestamp=datetime.now().timestamp(),
+                    volume=100.0,
+                    price=0.0,
+                    side=Side.SELL,
+                    type=DataType.ORDER,
+                    instrument=_INSTRUMENT,
+                    exchange='')
+        ob.add(data)
+
+        print(ob)
+        assert ob.topOfBook() == {"bid": (0.0, 0.0), "ask": (4.5, 3.0)}
+        print(ob.levels(3))
+        assert ob.levels(3) == {'bid': [], 'ask': [(4.5, 3.0), (4.5, 3.0), (5.5, 1.0), (6.0, 1.0)]}

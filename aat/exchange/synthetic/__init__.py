@@ -14,9 +14,11 @@ def _getName(n=1):
 
 
 class SyntheticExchange(Exchange):
-    def __init__(self, callback=None):
+    def __init__(self, callback=None, verbose=False, **kwargs):
         self._exchange_type = 'synthetic'
         self._callback = callback or print
+        self._verbose = verbose
+        self._id = 0
 
     def _seed(self, symbols=None):
         self._instruments = {symbol: Instrument(symbol) for symbol in symbols or _getName(1)}
@@ -35,7 +37,7 @@ class SyntheticExchange(Exchange):
             while start < end:
                 side = Side.BUY if start <= mid else Side.SELL
                 increment = choice((.01, .05, .1, .2))
-                orderbook.add(Data(id=1,
+                orderbook.add(Data(id=self._id,
                                    timestamp=datetime.now().timestamp(),
                                    volume=round(random()*10, 0),
                                    price=start,
@@ -44,6 +46,7 @@ class SyntheticExchange(Exchange):
                                    instrument=self._instruments[symbol],
                                    exchange=self._exchange_type))
                 start = round(start + increment, 2)
+                self._id += 1
 
     def __repr__(self):
         ret = ''
@@ -79,11 +82,12 @@ class SyntheticExchange(Exchange):
             levels = orderbook.topOfBook()
             volume = round(random()*5, 0)
 
+
             if do == 'buy':
                 # new buy order
                 # choose a price level
                 price = round(levels['ask'][0] - choice((.01, .05, .1, .2)), 2)
-                orderbook.add(Data(id=1,
+                orderbook.add(Data(id=self._id,
                                    timestamp=datetime.now().timestamp(),
                                    volume=volume,
                                    price=price,
@@ -91,10 +95,11 @@ class SyntheticExchange(Exchange):
                                    type=DataType.ORDER,
                                    instrument=instrument,
                                    exchange='synthetic'))
+                self._id += 1
             elif do == 'sell':
                 # new sell order
                 price = round(levels['bid'][0] - choice((.01, .05, .1, .2)), 2)
-                orderbook.add(Data(id=1,
+                orderbook.add(Data(id=self._id,
                                    timestamp=datetime.now().timestamp(),
                                    volume=volume,
                                    price=price,
@@ -102,13 +107,14 @@ class SyntheticExchange(Exchange):
                                    type=DataType.ORDER,
                                    instrument=instrument,
                                    exchange='synthetic'))
+                self._id += 1
             elif do == 'cross':
                 # cross the spread
                 side = choice(('buy', 'sell'))
                 if side == 'buy':
                     # cross to buy
                     price = round(levels['ask'][0] + choice((0.0, .01, .05)), 2)
-                    orderbook.add(Data(id=1,
+                    orderbook.add(Data(id=self._id,
                                     timestamp=datetime.now().timestamp(),
                                     volume=volume,
                                     price=price,
@@ -116,10 +122,11 @@ class SyntheticExchange(Exchange):
                                     type=DataType.ORDER,
                                     instrument=instrument,
                                     exchange='synthetic'))
+                    self._id += 1
                 else:
                     # cross to sell
                     price = round(levels['bid'][0] - choice((0.0, .01, .05)), 2)
-                    orderbook.add(Data(id=1,
+                    orderbook.add(Data(id=self._id,
                                     timestamp=datetime.now().timestamp(),
                                     volume=volume,
                                     price=price,
@@ -127,6 +134,7 @@ class SyntheticExchange(Exchange):
                                     type=DataType.ORDER,
                                     instrument=instrument,
                                     exchange='synthetic'))
+                    self._id += 1
             elif do == 'cancel' or do == 'change':
                 # cancel an existing order
                 side = choice(('buy', 'sell'))
@@ -157,6 +165,9 @@ class SyntheticExchange(Exchange):
                         else:
                             order.volume = max(order.volume + choice((-1, -.5, .5, 1)), 1.0)
                             orderbook.add(order)
-            print(self)
+            
+            # print current state if running in verbose mode
+            if self._verbose:
+                print(self)
 
 Exchange.registerExchange('synthetic', SyntheticExchange)
