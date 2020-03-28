@@ -125,7 +125,7 @@ class OrderBook(object):
             if order.filled < order.volume:
                 if order.flag in (OrderFlag.ALL_OR_NONE, OrderFlag.FILL_OR_KILL):
                     # cancel the order, do not execute any
-                    pass
+                    self._collector.flush()
 
                 elif order.flag == OrderFlag.IMMEDIATE_OR_CANCEL:
                     # execute the ones that filled, kill the remainder
