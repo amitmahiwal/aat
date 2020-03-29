@@ -65,6 +65,25 @@ class OrderBook(object):
     def setCallback(self, callback):
         self._collector.setCallback(callback)
 
+    def _clearOrders(self, order, amount):
+        if order.side == Side.BUY:
+            self._sell_levels = self._sell_levels[amount:]
+        else:
+            self._buy_levels = self._buy_levels[:-amount] if amount else self._buy_levels
+
+    def _getTop(self, side, x):
+        return (self._sell_levels[x] if len(self._sell_levels) > x else None) if side == Side.BUY else (self._buy_levels[-1 - x] if len(self._buy_levels) > x else None)
+
+    def _shouldContinue(self, top, order):
+        if top is None:
+            return False
+        return order.price >= top if order.side == Side.BUY else order.price <= top
+
+    def _crossTrade(self, top, order):
+        if order.side == Side.BUY:
+            return self._sells[top].cross(order)
+        return self._buys[top].cross(order)
+
     def add(self, order):
         '''add a new order to the order book, potentially triggering events:
             EventType.TRADE: if this order crosses the book and fills orders
@@ -73,125 +92,85 @@ class OrderBook(object):
         Args:
             order (Data): order to submit to orderbook
         '''
-        if order.side == Side.BUY:
-            # order is buy, so look at top of sell side
-            top = self._sell_levels[0] if len(self._sell_levels) > 0 else None
+        # price levels to clear
+        cleared = []
 
-            # price levels to clear
-            cleared = []
+        # order is buy, so look at top of sell side
+        top = self._getTop(order.side, len(cleared))
 
-            # check if crosses
-            while top is not None and order.price >= top:
-                # execute order against level
-                # if returns trade, it cleared the level
-                # else, order was fully executed
-                trade = self._sells[top].cross(order)
+        # check if crosses
+        while self._shouldContinue(top, order):
+            # execute order against level
+            # if returns trade, it cleared the level
+            # else, order was fully executed
+            trade = self._crossTrade(top, order)
 
-                if trade:
-                    # clear sell level
-                    cleared.append(top)
-                    top = self._sell_levels[len(cleared)] if len(self._sell_levels) > len(cleared) else None
-                    continue
+            if trade:
+                # clear sell level
+                cleared.append(top)
+                top = self._getTop(order.side, len(cleared))
+                continue
 
-                # trade is done, check if level was cleared exactly
+            # trade is done, check if level was cleared exactly
+            if order.side == Side.BUY:
                 if not self._sells[top]:
                     # level cleared exactly
                     cleared.append(top)
-                break
-
-            # clear levels
-            self._sell_levels = self._sell_levels[len(cleared):]
-
-            # if order remaining, check rules/push to book
-            if order.filled < order.volume:
-                if order.flag in (OrderFlag.ALL_OR_NONE, OrderFlag.FILL_OR_KILL):
-                    # cancel the order, do not execute any
-                    self._collector.clear()
-
-                elif order.flag == OrderFlag.IMMEDIATE_OR_CANCEL:
-                    # execute the ones that filled, kill the remainder
-                    self._collector.pushCancel(order)
-                    self._collector.flush()
-
-                elif order.order_type == OrderType.LIMIT:
-                    self._collector.flush()
-
-                    # limit order, put on books
-                    if _insort(self._buy_levels, order.price):
-                        # new price level
-                        self._buys[order.price] = _PriceLevel(order.price, collector=self._collector)
-
-                    # add order to price level
-                    self._buys[order.price].add(order)
-
-                else:
-                    # market order, partial
-                    if order.filled > 0:
-                        self._collector.pushTrade(order)
-
             else:
-                # execute all the orders
-                self._collector.flush()
-
-        else:
-            # order is sell, so look at top of buy side
-            top = self._buy_levels[-1] if len(self._buy_levels) > 0 else None
-
-            # price levels to clear
-            cleared = []
-
-            # check if crosses
-            while top is not None and order.price <= top:
-                # execute order against level
-                # if returns trade, it cleared the level
-                # else, order was fully executed
-                trade = self._buys[top].cross(order)
-
-                if trade:
-                    # clear sell level
-                    cleared.append(top)
-                    top = self._buy_levels[-1 - len(cleared)] if len(self._buy_levels) > len(cleared) else None
-                    continue
-
-                # trade is done, check if level was cleared exactly
                 if not self._buys[top]:
                     # level cleared exactly
                     cleared.append(top)
-                break
+            break
 
-            # clear levels
-            self._buy_levels = self._buy_levels[:-len(cleared)] if len(cleared) else self._buy_levels
+        # if order remaining, check rules/push to book
+        if order.filled < order.volume:
+            if order.flag in (OrderFlag.ALL_OR_NONE, OrderFlag.FILL_OR_KILL):
+                # cancel the order, do not execute any
+                self._collector.clear()
 
-            # if order remaining, push to book
-            if order.filled < order.volume:
-                if order.flag in (OrderFlag.ALL_OR_NONE, OrderFlag.FILL_OR_KILL):
-                    # cancel the order, do not execute any
-                    self._collector.clear()
+            elif order.flag == OrderFlag.IMMEDIATE_OR_CANCEL:
+                # execute the ones that filled, kill the remainder
+                self._collector.pushCancel(order)
+                self._collector.flush()
 
-                elif order.flag == OrderFlag.IMMEDIATE_OR_CANCEL:
-                    # execute the ones that filled, kill the remainder
-                    self._collector.pushCancel(order)
-                    self._collector.flush()
+                # clear levels
+                self._clearOrders(order, len(cleared))
 
-                elif order.order_type == OrderType.LIMIT:
-                    self._collector.flush()
+            elif order.order_type == OrderType.LIMIT:
+                # execute order
+                self._collector.flush()
 
-                    # push to book
+                # clear levels
+                self._clearOrders(order, len(cleared))
+
+                # limit order, put on books
+                if order.side == Side.BUY:
+                    if _insort(self._buy_levels, order.price):
+                        # new price level
+                        self._buys[order.price] = _PriceLevel(order.price, collector=self._collector)
+                    # add order to price level
+                    self._buys[order.price].add(order)
+                else:
                     if _insort(self._sell_levels, order.price):
                         # new price level
                         self._sells[order.price] = _PriceLevel(order.price, collector=self._collector)
-
                     # add order to price level
                     self._sells[order.price].add(order)
 
-                else:
-                    # market order, partial
-                    if order.filled > 0:
-                        self._collector.pushTrade(order)
-
             else:
-                # execute all the orders
-                self._collector.flush()
+                # market order, partial
+                if order.filled > 0:
+                    self._collector.pushTrade(order)
+
+                # clear levels
+                self._clearOrders(order, len(cleared))
+
+        else:
+            # execute all the orders
+            self._collector.flush()
+
+            # clear levels
+            self._clearOrders(order, len(cleared))
 
         # clear the collector
         self._collector.clear()
