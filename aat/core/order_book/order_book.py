@@ -66,23 +66,42 @@ class OrderBook(object):
         self._collector.setCallback(callback)
 
     def _clearOrders(self, order, amount):
+        '''internal'''
         if order.side == Side.BUY:
             self._sell_levels = self._sell_levels[amount:]
         else:
             self._buy_levels = self._buy_levels[:-amount] if amount else self._buy_levels
 
     def _getTop(self, side, x):
+        '''internal'''
         return (self._sell_levels[x] if len(self._sell_levels) > x else None) if side == Side.BUY else (self._buy_levels[-1 - x] if len(self._buy_levels) > x else None)
 
     def _shouldContinue(self, top, order):
+        '''internal'''
         if top is None:
             return False
         return order.price >= top if order.side == Side.BUY else order.price <= top
 
     def _crossTrade(self, top, order):
+        '''internal'''
         if order.side == Side.BUY:
             return self._sells[top].cross(order)
         return self._buys[top].cross(order)
+
+    def _addPriceLevel(self, order):
+        '''internal'''
+        if order.side == Side.BUY:
+            if _insort(self._buy_levels, order.price):
+                # new price level
+                self._buys[order.price] = _PriceLevel(order.price, collector=self._collector)
+            # add order to price level
+            self._buys[order.price].add(order)
+        else:
+            if _insort(self._sell_levels, order.price):
+                # new price level
+                self._sells[order.price] = _PriceLevel(order.price, collector=self._collector)
+            # add order to price level
+            self._sells[order.price].add(order)
 
     def add(self, order):
         '''add a new order to the order book, potentially triggering events:
@@ -144,18 +163,7 @@ class OrderBook(object):
                 self._clearOrders(order, len(cleared))
 
                 # limit order, put on books
-                if order.side == Side.BUY:
-                    if _insort(self._buy_levels, order.price):
-                        # new price level
-                        self._buys[order.price] = _PriceLevel(order.price, collector=self._collector)
-                    # add order to price level
-                    self._buys[order.price].add(order)
-                else:
-                    if _insort(self._sell_levels, order.price):
-                        # new price level
-                        self._sells[order.price] = _PriceLevel(order.price, collector=self._collector)
-                    # add order to price level
-                    self._sells[order.price].add(order)
+                self._addPriceLevel(order)
 
             else:
                 # market order, partial
