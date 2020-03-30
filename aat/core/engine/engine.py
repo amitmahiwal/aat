@@ -7,17 +7,18 @@ from traitlets import validate, TraitError, Unicode, Bool, List, Instance
 from tornado.web import StaticFileHandler, RedirectHandler, Application as TornadoApplication
 from perspective import PerspectiveManager, PerspectiveTornadoHandler
 
-from ..config import EventType
-from ..core import Event, EventHandler, PrintHandler, TableHandler
-from ..exchange import Exchange
-# from ..strategy import Strategy
-from ..ui import ServerApplication
+from ..models import Event
+from ..handler import EventHandler, PrintHandler
+from ..table import TableHandler
+from ...config import EventType
+from ...exchange import Exchange
+# from aat.strategy import Strategy
+from ...ui import ServerApplication
 
 try:
     import uvloop
 except ImportError:
     uvloop = None
-
 
 
 class TradingEngine(Application):
