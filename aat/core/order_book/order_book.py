@@ -77,33 +77,6 @@ class OrderBook(object):
         '''internal'''
         return (self._sell_levels[x] if len(self._sell_levels) > x else None) if side == Side.BUY else (self._buy_levels[-1 - x] if len(self._buy_levels) > x else None)
 
-    def _shouldContinue(self, top, order):
-        '''internal'''
-        if top is None:
-            return False
-        return order.price >= top if order.side == Side.BUY else order.price <= top
-
-    def _crossTrade(self, top, order):
-        '''internal'''
-        if order.side == Side.BUY:
-            return self._sells[top].cross(order)
-        return self._buys[top].cross(order)
-
-    def _addPriceLevel(self, order):
-        '''internal'''
-        if order.side == Side.BUY:
-            if _insort(self._buy_levels, order.price):
-                # new price level
-                self._buys[order.price] = _PriceLevel(order.price, collector=self._collector)
-            # add order to price level
-            self._buys[order.price].add(order)
-        else:
-            if _insort(self._sell_levels, order.price):
-                # new price level
-                self._sells[order.price] = _PriceLevel(order.price, collector=self._collector)
-            # add order to price level
-            self._sells[order.price].add(order)
-
     def add(self, order):
         '''add a new order to the order book, potentially triggering events:
             EventType.TRADE: if this order crosses the book and fills orders
@@ -118,12 +91,18 @@ class OrderBook(object):
         # order is buy, so look at top of sell side
         top = self._getTop(order.side, len(cleared))
 
+        # set levels to the right side
+        levels = self._buy_levels if order.side == Side.BUY else self._sell_levels
+        prices = self._buys if order.side==Side.BUY else self._sells
+        prices_cross = self._sells if order.side==Side.BUY else self._buys
+
+
         # check if crosses
-        while self._shouldContinue(top, order):
+        while top is not None and (order.price >= top if order.side == Side.BUY else order.price <= top):
             # execute order against level
             # if returns trade, it cleared the level
             # else, order was fully executed
-            trade = self._crossTrade(top, order)
+            trade = prices_cross[top].cross(order)
 
             if trade:
                 # clear sell level
@@ -164,7 +143,11 @@ class OrderBook(object):
                 self._clearOrders(order, len(cleared))
 
                 # limit order, put on books
-                self._addPriceLevel(order)
+                if _insort(levels, order.price):
+                    # new price level
+                    prices[order.price] = _PriceLevel(order.price, collector=self._collector)
+                # add order to price level
+                prices[order.price].add(order)
 
             else:
                 # market order, partial
