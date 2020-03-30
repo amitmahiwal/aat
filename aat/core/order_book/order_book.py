@@ -16,7 +16,7 @@ class OrderBook(object):
                 - [x] no flag
                 - [x] fill-or-kill: entire order must fill against current book, otherwise nothing fills
                 - [ ] all-or-none: entire order must fill against 1 order, otherwise nothing fills
-                - [ ] immediate-or-cancel: same as fill or kill
+                - [x] immediate-or-cancel: same as fill or kill
 
         - [x] limit
             - [x] either puts on book or crosses spread, by default puts remainder on book
@@ -25,7 +25,7 @@ class OrderBook(object):
                 - [x] no flag
                 - [x] fill-or-kill: entire order must fill against current book, otherwise cancelled
                 - [ ] all-or-none: entire order must fill against 1 order, otherwise cancelled
-                - [ ] immediate-or-cancel: whenever this order executes, fill whatever fills and cancel remaining
+                - [x] immediate-or-cancel: whenever this order executes, fill whatever fills and cancel remaining
 
         - [ ] stop-market
             - 0 volume order, but when crosses triggers the submission of a market order
@@ -34,7 +34,7 @@ class OrderBook(object):
 
     Supports the following order flags:
         - [x] no flag
-        - [x] fill-or-kill
+        - [ ] fill-or-kill
         - [ ] all-or-none
         - [ ] immediate-or-cancel
 

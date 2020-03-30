@@ -102,7 +102,67 @@ class TestOrderFlags:
         pass
 
     def test_immediate_or_cancel_taker_market(self):
-        pass
+        data = Order(id=1,
+                    timestamp=datetime.now().timestamp(),
+                    volume=2.0,
+                    price=5.0,
+                    side=Side.SELL,
+                    type=DataType.ORDER,
+                    order_type=OrderType.MARKET,
+                    flag=OrderFlag.IMMEDIATE_OR_CANCEL,
+                    instrument=_INSTRUMENT,
+                    exchange='')
+        print(self.ob)
+        self.ob.add(data)
+
+        print(self.ob.topOfBook())
+        assert self.ob.topOfBook() == {"bid": (4.5, 1.0), "ask": (5.5, 1.0)}
+
+        data = Order(id=1,
+                    timestamp=datetime.now().timestamp(),
+                    volume=2.0,
+                    price=4.0,
+                    side=Side.SELL,
+                    type=DataType.ORDER,
+                    order_type=OrderType.MARKET,
+                    flag=OrderFlag.IMMEDIATE_OR_CANCEL,
+                    instrument=_INSTRUMENT,
+                    exchange='')
+        print(self.ob)
+        self.ob.add(data)
+
+        print(self.ob.topOfBook())
+        assert self.ob.topOfBook() == {"bid": (3.5, 1.0), "ask": (5.5, 1.0)}
 
     def test_immediate_or_cancel_taker_limit(self):
-        pass
+        data = Order(id=1,
+                    timestamp=datetime.now().timestamp(),
+                    volume=2.0,
+                    price=5.0,
+                    side=Side.SELL,
+                    type=DataType.ORDER,
+                    order_type=OrderType.LIMIT,
+                    flag=OrderFlag.IMMEDIATE_OR_CANCEL,
+                    instrument=_INSTRUMENT,
+                    exchange='')
+        print(self.ob)
+        self.ob.add(data)
+
+        print(self.ob.topOfBook())
+        assert self.ob.topOfBook() == {"bid": (4.5, 1.0), "ask": (5.5, 1.0)}
+
+        data = Order(id=1,
+                    timestamp=datetime.now().timestamp(),
+                    volume=2.0,
+                    price=4.0,
+                    side=Side.SELL,
+                    type=DataType.ORDER,
+                    order_type=OrderType.LIMIT,
+                    flag=OrderFlag.IMMEDIATE_OR_CANCEL,
+                    instrument=_INSTRUMENT,
+                    exchange='')
+        print(self.ob)
+        self.ob.add(data)
+
+        print(self.ob.topOfBook())
+        assert self.ob.topOfBook() == {"bid": (3.5, 1.0), "ask": (5.5, 1.0)}
