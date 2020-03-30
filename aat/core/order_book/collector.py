@@ -11,6 +11,9 @@ class _Collector(object):
         self._orders = deque()
         self.reset()
 
+    ####################
+    # State Management #
+    ####################
     def reset(self):
         self._event_queue.clear()
         self._price = 0.0
@@ -23,34 +26,6 @@ class _Collector(object):
     def push(self, event):
         '''push event to queue'''
         self._event_queue.append(event)
-
-    def accumulate(self, order):
-        self._price = (self._price * self._volume + order.price * order.volume) / (self._volume + order.volume)
-        self._volume += order.volume
-        self._orders.append(order)
-
-    def flush(self):
-        '''flush the event queue'''
-        while self._event_queue:
-            ev = self._event_queue.popleft()
-            self._callback(ev)
-        self.reset()
-
-    def clear(self):
-        '''clear the event queue'''
-        self.reset()
-
-    def price(self):
-        '''VWAP'''
-        return self._price
-
-    def volume(self):
-        '''volume'''
-        return self._volume
-
-    def orders(self):
-        '''orders'''
-        return self._orders
 
     def pushOpen(self, order):
         '''push order open'''
@@ -86,3 +61,40 @@ class _Collector(object):
                                      maker_orders=self.orders(),
                                      taker_order=taker_order,
                                      exchange=taker_order.exchange)))
+
+    def accumulate(self, order):
+        self._price = (self._price * self._volume + order.price * order.volume) / (self._volume + order.volume)
+        self._volume += order.volume
+        self._orders.append(order)
+
+    def commit(self):
+        '''flush the event queue'''
+        while self._event_queue:
+            ev = self._event_queue.popleft()
+            self._callback(ev)
+        self.reset()
+
+    def revert(self):
+        '''revert the event queue'''
+        self.reset()
+
+
+    def clear(self):
+        '''clear the event queue'''
+        self.reset()
+    ####################
+
+    ###############
+    # Order Stats #
+    ###############
+    def price(self):
+        '''VWAP'''
+        return self._price
+
+    def volume(self):
+        '''volume'''
+        return self._volume
+
+    def orders(self):
+        '''orders'''
+        return self._orders

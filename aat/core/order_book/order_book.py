@@ -125,19 +125,19 @@ class OrderBook(object):
         if order.filled < order.volume:
             if order.flag in (OrderFlag.ALL_OR_NONE, OrderFlag.FILL_OR_KILL):
                 # cancel the order, do not execute any
-                self._collector.clear()
+                self._collector.revert()
 
             elif order.flag == OrderFlag.IMMEDIATE_OR_CANCEL:
                 # execute the ones that filled, kill the remainder
                 self._collector.pushCancel(order)
-                self._collector.flush()
+                self._collector.commit()
 
                 # clear levels
                 self._clearOrders(order, len(cleared))
 
             elif order.order_type == OrderType.LIMIT:
                 # execute order
-                self._collector.flush()
+                self._collector.commit()
 
                 # clear levels
                 self._clearOrders(order, len(cleared))
@@ -159,7 +159,7 @@ class OrderBook(object):
 
         else:
             # execute all the orders
-            self._collector.flush()
+            self._collector.commit()
 
             # clear levels
             self._clearOrders(order, len(cleared))
