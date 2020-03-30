@@ -15,6 +15,7 @@ while x < 10.0:
                 price=x,
                 side=side,
                 type=DataType.ORDER,
+                flag=OrderFlag.FILL_OR_KILL,
                 instrument=_INSTRUMENT,
                 exchange=''))
     x += .5

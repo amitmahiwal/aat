@@ -5,19 +5,13 @@ from .helpers import _seed
 
 _INSTRUMENT = Instrument('TE.ST')
 
-class TestOrderFlags:
+class TestOrderFlagsTaker:
     def setup(self):
         self.ob = OrderBook(_INSTRUMENT)
         _seed(self.ob, _INSTRUMENT)
         assert self.ob.topOfBook() == {"bid": (5.0, 1.0), 'ask': (5.5, 1.0)}
 
-    def test_fill_or_kill_maker_market(self):
-        pass
-
-    def test_fill_or_kill_maker_limit(self):
-        pass
-
-    def test_fill_or_kill_taker_market(self):
+    def test_fill_or_kill_market(self):
         data = Order(id=1,
                     timestamp=datetime.now().timestamp(),
                     volume=2.0,
@@ -83,25 +77,13 @@ class TestOrderFlags:
         print(self.ob.topOfBook())
         assert self.ob.topOfBook() == {"bid": (4.0, 1.0), "ask": (5.5, 1.0)}
 
-    def test_all_or_none_maker_market(self):
-        pass
-
-    def test_all_or_none_maker_limit(self):
-        pass
-
-    def test_all_or_none_taker_market(self):
+    def test_all_or_none_market(self):
         pass
 
     def test_all_or_none_taker_limit(self):
         pass
 
-    def test_immediate_or_cancel_maker_market(self):
-        pass
-
-    def test_immediate_or_cancel_maker_limit(self):
-        pass
-
-    def test_immediate_or_cancel_taker_market(self):
+    def test_immediate_or_cancel_market(self):
         data = Order(id=1,
                     timestamp=datetime.now().timestamp(),
                     volume=2.0,
@@ -166,3 +148,20 @@ class TestOrderFlags:
 
         print(self.ob.topOfBook())
         assert self.ob.topOfBook() == {"bid": (3.5, 1.0), "ask": (5.5, 1.0)}
+
+
+class TestOrderFlagsMaker:
+    def test_fill_or_kill_maker(self):
+        self.ob = OrderBook(_INSTRUMENT)
+        _seed(self.ob, _INSTRUMENT, OrderFlag.FILL_OR_KILL)
+        assert self.ob.topOfBook() == {"bid": (5.0, 1.0), 'ask': (5.5, 1.0)}
+
+    def test_all_or_none_maker(self):
+        self.ob = OrderBook(_INSTRUMENT)
+        _seed(self.ob, _INSTRUMENT, OrderFlag.ALL_OR_NONE)
+        assert self.ob.topOfBook() == {"bid": (5.0, 1.0), 'ask': (5.5, 1.0)}
+
+    # def test_immediate_or_cancel_maker(self):
+    #     self.ob = OrderBook(_INSTRUMENT)
+    #     _seed(self.ob, _INSTRUMENT, OrderFlag.IMMEDIATE_OR_CANCEL)
+    #     assert self.ob.topOfBook() == {"bid": (5.0, 1.0), 'ask': (5.5, 1.0)}
