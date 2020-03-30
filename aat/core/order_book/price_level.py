@@ -49,6 +49,8 @@ class _PriceLevel(object):
 
             # pop maker order from list
             maker_order = self._orders.popleft()
+
+            # add to staged in case we need to revert
             self._orders_staged.append(maker_order)
 
             # remaining in maker_order

@@ -175,23 +175,16 @@ class OrderBook(object):
         '''
         price = order.price
         side = order.side
+        levels = self._buy_levels if side == Side.BUY else self._sell_levels
+        prices = self._buys if side == Side.BUY else self._sells
 
-        if side == Side.BUY:
-            if price not in self._buy_levels:
-                raise Exception('Orderbook out of sync!')
-            self._buys[price].remove(order)
+        if price not in levels:
+            raise Exception('Orderbook out of sync!')
+        prices[price].remove(order)
 
-            # delete level if no more volume
-            if not self._buys[price]:
-                self._buy_levels.remove(price)
-        else:
-            if price not in self._sell_levels:
-                raise Exception('Orderbook out of sync!')
-            self._sells[price].remove(order)
-
-            # delete level if no more volume
-            if not self._sells[price]:
-                self._sell_levels.remove(price)
+        # delete level if no more volume
+        if not prices[price]:
+            levels.remove(price)
 
     def topOfBook(self):
         '''return top of both sides
