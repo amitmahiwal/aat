@@ -156,10 +156,72 @@ class TestOrderFlagsMaker:
         _seed(self.ob, _INSTRUMENT, OrderFlag.FILL_OR_KILL)
         assert self.ob.topOfBook() == {"bid": (5.0, 1.0), 'ask': (5.5, 1.0)}
 
+        data = Order(id=1,
+                    timestamp=datetime.now().timestamp(),
+                    volume=0.5,
+                    price=5.0,
+                    side=Side.SELL,
+                    type=DataType.ORDER,
+                    order_type=OrderType.LIMIT,
+                    instrument=_INSTRUMENT,
+                    exchange='')
+        print(self.ob)
+        self.ob.add(data)
+
+        print(self.ob.topOfBook())
+        assert self.ob.topOfBook() == {"bid": (4.5, 1.0), "ask": (5.0, 0.5)}
+
+        data = Order(id=1,
+                    timestamp=datetime.now().timestamp(),
+                    volume=1.5,
+                    price=4.0,
+                    side=Side.SELL,
+                    type=DataType.ORDER,
+                    order_type=OrderType.LIMIT,
+                    instrument=_INSTRUMENT,
+                    exchange='')
+        print(self.ob)
+        self.ob.add(data)
+
+        print(self.ob.topOfBook())
+        assert self.ob.topOfBook() == {"bid": (3.5, 1.0), "ask": (4.0, 0.5)}
+
+
     def test_all_or_none_maker(self):
         self.ob = OrderBook(_INSTRUMENT)
         _seed(self.ob, _INSTRUMENT, OrderFlag.ALL_OR_NONE)
         assert self.ob.topOfBook() == {"bid": (5.0, 1.0), 'ask': (5.5, 1.0)}
+
+
+        data = Order(id=1,
+                    timestamp=datetime.now().timestamp(),
+                    volume=0.5,
+                    price=5.0,
+                    side=Side.SELL,
+                    type=DataType.ORDER,
+                    order_type=OrderType.LIMIT,
+                    instrument=_INSTRUMENT,
+                    exchange='')
+        print(self.ob)
+        self.ob.add(data)
+
+        print(self.ob.topOfBook())
+        assert self.ob.topOfBook() == {"bid": (4.5, 1.0), "ask": (5.0, 0.5)}
+
+        data = Order(id=1,
+                    timestamp=datetime.now().timestamp(),
+                    volume=1.5,
+                    price=4.0,
+                    side=Side.SELL,
+                    type=DataType.ORDER,
+                    order_type=OrderType.LIMIT,
+                    instrument=_INSTRUMENT,
+                    exchange='')
+        print(self.ob)
+        self.ob.add(data)
+
+        print(self.ob.topOfBook())
+        assert self.ob.topOfBook() == {"bid": (3.5, 1.0), "ask": (4.0, 0.5)}
 
     # def test_immediate_or_cancel_maker(self):
     #     self.ob = OrderBook(_INSTRUMENT)
