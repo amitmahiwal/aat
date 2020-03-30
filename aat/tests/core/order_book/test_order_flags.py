@@ -1,0 +1,108 @@
+from datetime import datetime
+from aat.config import Side, DataType, OrderFlag, OrderType
+from aat.core import Instrument, OrderBook, Order
+from .helpers import _seed
+
+_INSTRUMENT = Instrument('TE.ST')
+
+class TestOrderFlags:
+    def setup(self):
+        self.ob = OrderBook(_INSTRUMENT)
+        _seed(self.ob, _INSTRUMENT)
+        assert self.ob.topOfBook() == {"bid": (5.0, 1.0), 'ask': (5.5, 1.0)}
+
+    def test_fill_or_kill_maker_market(self):
+        pass
+
+    def test_fill_or_kill_maker_limit(self):
+        pass
+
+    def test_fill_or_kill_taker_market(self):
+        data = Order(id=1,
+                    timestamp=datetime.now().timestamp(),
+                    volume=2.0,
+                    price=5.0,
+                    side=Side.SELL,
+                    type=DataType.ORDER,
+                    order_type=OrderType.MARKET,
+                    flag=OrderFlag.FILL_OR_KILL,
+                    instrument=_INSTRUMENT,
+                    exchange='')
+        print(self.ob)
+        self.ob.add(data)
+
+        print(self.ob.topOfBook())
+        assert self.ob.topOfBook() == {"bid": (5.0, 1.0), "ask": (5.5, 1.0)}
+
+        data = Order(id=1,
+                    timestamp=datetime.now().timestamp(),
+                    volume=2.0,
+                    price=4.5,
+                    side=Side.SELL,
+                    type=DataType.ORDER,
+                    order_type=OrderType.MARKET,
+                    flag=OrderFlag.FILL_OR_KILL,
+                    instrument=_INSTRUMENT,
+                    exchange='')
+        print(self.ob)
+        self.ob.add(data)
+
+        print(self.ob.topOfBook())
+        assert self.ob.topOfBook() == {"bid": (4.0, 1.0), "ask": (5.5, 1.0)}
+
+    def test_fill_or_kill_taker_limit(self):
+        data = Order(id=1,
+                    timestamp=datetime.now().timestamp(),
+                    volume=2.0,
+                    price=5.0,
+                    side=Side.SELL,
+                    type=DataType.ORDER,
+                    order_type=OrderType.LIMIT,
+                    flag=OrderFlag.FILL_OR_KILL,
+                    instrument=_INSTRUMENT,
+                    exchange='')
+        print(self.ob)
+        self.ob.add(data)
+
+        print(self.ob.topOfBook())
+        assert self.ob.topOfBook() == {"bid": (5.0, 1.0), "ask": (5.5, 1.0)}
+
+        data = Order(id=1,
+                    timestamp=datetime.now().timestamp(),
+                    volume=2.0,
+                    price=4.5,
+                    side=Side.SELL,
+                    type=DataType.ORDER,
+                    order_type=OrderType.LIMIT,
+                    flag=OrderFlag.FILL_OR_KILL,
+                    instrument=_INSTRUMENT,
+                    exchange='')
+        print(self.ob)
+        self.ob.add(data)
+
+        print(self.ob.topOfBook())
+        assert self.ob.topOfBook() == {"bid": (4.0, 1.0), "ask": (5.5, 1.0)}
+
+    def test_all_or_none_maker_market(self):
+        pass
+
+    def test_all_or_none_maker_limit(self):
+        pass
+
+    def test_all_or_none_taker_market(self):
+        pass
+
+    def test_all_or_none_taker_limit(self):
+        pass
+
+    def test_immediate_or_cancel_maker_market(self):
+        pass
+
+    def test_immediate_or_cancel_maker_limit(self):
+        pass
+
+    def test_immediate_or_cancel_taker_market(self):
+        pass
+
+    def test_immediate_or_cancel_taker_limit(self):
+        pass

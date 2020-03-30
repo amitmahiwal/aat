@@ -14,16 +14,16 @@ class OrderBook(object):
 
             Flags:
                 - [x] no flag
-                - [ ] fill-or-kill: entire order must fill against current book, otherwise nothing fills
+                - [x] fill-or-kill: entire order must fill against current book, otherwise nothing fills
                 - [ ] all-or-none: entire order must fill against 1 order, otherwise nothing fills
-                - [ ] immediate-or-cancel: same as fill or kill for market orders
+                - [ ] immediate-or-cancel: same as fill or kill
 
         - [x] limit
             - [x] either puts on book or crosses spread, by default puts remainder on book
 
             Flags:
                 - [x] no flag
-                - [ ] fill-or-kill: entire order must fill before book moves, otherwise cancelled
+                - [x] fill-or-kill: entire order must fill against current book, otherwise cancelled
                 - [ ] all-or-none: entire order must fill against 1 order, otherwise cancelled
                 - [ ] immediate-or-cancel: whenever this order executes, fill whatever fills and cancel remaining
 
@@ -34,7 +34,7 @@ class OrderBook(object):
 
     Supports the following order flags:
         - [x] no flag
-        - [ ] fill-or-kill
+        - [x] fill-or-kill
         - [ ] all-or-none
         - [ ] immediate-or-cancel
 
@@ -93,7 +93,6 @@ class OrderBook(object):
         prices = self._buys if order.side==Side.BUY else self._sells
         prices_cross = self._sells if order.side==Side.BUY else self._buys
 
-
         # check if crosses
         while top is not None and (order.price >= top if order.side == Side.BUY else order.price <= top):
             # execute order against level
@@ -117,6 +116,10 @@ class OrderBook(object):
             if order.flag in (OrderFlag.ALL_OR_NONE, OrderFlag.FILL_OR_KILL):
                 # cancel the order, do not execute any
                 self._collector.revert()
+                
+                # cancel the order
+                self._collector.pushCancel(order)
+                self._collector.commit()
 
             else:
                 # clear levels
