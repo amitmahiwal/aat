@@ -1,8 +1,8 @@
 # AAT
 AsyncAlgoTrading
 
-[![Build Status](https://travis-ci.org/timkpaine/aat.svg?branch=master)](https://travis-ci.org/timkpaine/aat)
-[![Coverage](https://codecov.io/gh/timkpaine/aat/coverage.svg?branch=master&token=JGqz8ChQxd)](https://codecov.io/gh/timkpaine/aat)
+[![Build Status](https://dev.azure.com/tpaine154/aat/_apis/build/status/timkpaine.aat?branchName=master)](https://dev.azure.com/tpaine154/aat/_build/latest?definitionId=18&branchName=master)
+[![Coverage](https://img.shields.io/azure-devops/coverage/tpaine154/aat/18)](https://dev.azure.com/tpaine154/aat/_apis/build/status/timkpaine.aat?branchName=master)
 [![BCH compliance](https://bettercodehub.com/edge/badge/timkpaine/aat?branch=master)](https://bettercodehub.com/)
 [![License](https://img.shields.io/github/license/timkpaine/aat.svg)](https://pypi.python.org/pypi/aat)
 [![PyPI](https://img.shields.io/pypi/v/aat.svg)](https://pypi.python.org/pypi/aat)
@@ -12,7 +12,7 @@ AsyncAlgoTrading
 
 It comes with support for live trading across (and between) multiple exchanges, fully integrated backtesting support, slippage and transaction cost modeling, and robust reporting and risk mitigation through manual and programatic algorithm controls.
 
-Like Zipline, the inspriation for this system, `aat` exposes a single strategy class which is utilized for both live trading and backtesting. The strategy class is simple enough to write and test algorithms quickly, but extensible enough to allow for complex slippage and transaction cost modeling, as well as mid- and post- trade analysis.  
+Like Zipline, the inspiration for this system, `aat` exposes a single strategy class which is utilized for both live trading and backtesting. The strategy class is simple enough to write and test algorithms quickly, but extensible enough to allow for complex slippage and transaction cost modeling, as well as mid- and post- trade analysis.  
 
 
 # Overview
