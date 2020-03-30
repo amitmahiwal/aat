@@ -85,11 +85,8 @@ class OrderBook(object):
         Args:
             order (Data): order to submit to orderbook
         '''
-        # price levels to clear
-        cleared = []
-
         # order is buy, so look at top of sell side
-        top = self._getTop(order.side, len(cleared))
+        top = self._getTop(order.side, self._collector.clearedLevels())
 
         # set levels to the right side
         levels = self._buy_levels if order.side == Side.BUY else self._sell_levels
@@ -106,19 +103,13 @@ class OrderBook(object):
 
             if trade:
                 # clear sell level
-                cleared.append(top)
-                top = self._getTop(order.side, len(cleared))
+                top = self._getTop(order.side, self._collector.clearLevel(prices_cross[top]))
                 continue
 
             # trade is done, check if level was cleared exactly
-            if order.side == Side.BUY:
-                if not self._sells[top]:
-                    # level cleared exactly
-                    cleared.append(top)
-            else:
-                if not self._buys[top]:
-                    # level cleared exactly
-                    cleared.append(top)
+            if not prices_cross[top]:
+                # level cleared exactly
+                self._collector.clearLevel(prices_cross[top])
             break
 
         # if order remaining, check rules/push to book
@@ -127,42 +118,37 @@ class OrderBook(object):
                 # cancel the order, do not execute any
                 self._collector.revert()
 
-            elif order.flag == OrderFlag.IMMEDIATE_OR_CANCEL:
-                # execute the ones that filled, kill the remainder
-                self._collector.pushCancel(order)
-                self._collector.commit()
-
-                # clear levels
-                self._clearOrders(order, len(cleared))
-
-            elif order.order_type == OrderType.LIMIT:
-                # execute order
-                self._collector.commit()
-
-                # clear levels
-                self._clearOrders(order, len(cleared))
-
-                # limit order, put on books
-                if _insort(levels, order.price):
-                    # new price level
-                    prices[order.price] = _PriceLevel(order.price, collector=self._collector)
-                # add order to price level
-                prices[order.price].add(order)
-
             else:
-                # market order, partial
-                if order.filled > 0:
-                    self._collector.pushTrade(order)
-
                 # clear levels
-                self._clearOrders(order, len(cleared))
+                self._clearOrders(order, self._collector.clearedLevels())
 
+                if order.flag == OrderFlag.IMMEDIATE_OR_CANCEL:
+
+                    # execute the ones that filled, kill the remainder
+                    self._collector.pushCancel(order)
+                    self._collector.commit()
+
+                elif order.order_type == OrderType.LIMIT:
+                    # execute order
+                    self._collector.commit()
+
+                    # limit order, put on books
+                    if _insort(levels, order.price):
+                        # new price level
+                        prices[order.price] = _PriceLevel(order.price, collector=self._collector)
+                    # add order to price level
+                    prices[order.price].add(order)
+
+                else:
+                    # market order, partial
+                    if order.filled > 0:
+                        self._collector.pushTrade(order)
         else:
+            # clear levels
+            self._clearOrders(order, self._collector.clearedLevels())
+
             # execute all the orders
             self._collector.commit()
-
-            # clear levels
-            self._clearOrders(order, len(cleared))
 
         # clear the collector
         self._collector.clear()

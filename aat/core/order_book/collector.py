@@ -6,9 +6,19 @@ from ...config import EventType
 
 class _Collector(object):
     def __init__(self, callback):
+        # callback to call to process events
         self._callback = callback
+
+        # queue of events to trigger
         self._event_queue = deque()
+
+        # queue of orders that are included in the trade
         self._orders = deque()
+
+        # price levels to clear, if we commit
+        self._price_levels = deque()
+
+        # reset status
         self.reset()
 
     ####################
@@ -19,6 +29,7 @@ class _Collector(object):
         self._price = 0.0
         self._volume = 0.0
         self._orders.clear()
+        self._price_levels.clear()
 
     def setCallback(self, callback):
         self._callback = callback
@@ -67,17 +78,24 @@ class _Collector(object):
         self._volume += order.volume
         self._orders.append(order)
 
+    def clearLevel(self, price_level):
+        self._price_levels.append(price_level)
+        return len(self._price_levels)
+
     def commit(self):
         '''flush the event queue'''
         while self._event_queue:
             ev = self._event_queue.popleft()
             self._callback(ev)
+        for pl in self._price_levels:
+            pl.commit()
         self.reset()
 
     def revert(self):
         '''revert the event queue'''
+        for pl in self._price_levels:
+            pl.revert()
         self.reset()
-
 
     def clear(self):
         '''clear the event queue'''
@@ -96,5 +114,13 @@ class _Collector(object):
         return self._volume
 
     def orders(self):
-        '''orders'''
         return self._orders
+
+    def events(self):
+        return self._event_queue
+
+    def price_levels(self):
+        return self._price_levels
+
+    def clearedLevels(self):
+        return len(self._price_levels)
