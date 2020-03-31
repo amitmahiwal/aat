@@ -27,9 +27,9 @@ class OrderBook(object):
                 - [x] all-or-none: entire order must fill against 1 order, otherwise cancelled
                 - [x] immediate-or-cancel: whenever this order executes, fill whatever fills and cancel remaining
 
-        - [ ] stop-market
+        - [x] stop-market
             - 0 volume order, but when crosses triggers the submission of a market order
-        - [ ] stop-limit
+        - [x] stop-limit
             - 0 volume order, but when crosses triggers the submission of a market order
 
     Supports the following order flags:
