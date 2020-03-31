@@ -47,47 +47,47 @@ class TestStopLoss:
         assert ob.topOfBook() == {"bid": (5.0, 1.0), 'ask': (5.5, 1.0)}
 
         data = Order(id=1,
-                    timestamp=datetime.now().timestamp(),
-                    volume=0.0,
-                    price=5.0,
-                    side=Side.SELL,
-                    type=DataType.ORDER,
-                    order_type=OrderType.STOP_MARKET,
-                    stop_target=Order(
-                        id=1,
-                        timestamp=datetime.now().timestamp(),
-                        volume=1.0,
-                        price=4.0,
-                        side=Side.SELL,
-                        type=DataType.ORDER,
-                        order_type=OrderType.MARKET,
-                        instrument=_INSTRUMENT,
-                        exchange=''
-                    ),
-                    instrument=_INSTRUMENT,
-                    exchange='')
+                     timestamp=datetime.now().timestamp(),
+                     volume=0.0,
+                     price=5.0,
+                     side=Side.SELL,
+                     type=DataType.ORDER,
+                     order_type=OrderType.STOP_MARKET,
+                     stop_target=Order(
+                         id=1,
+                         timestamp=datetime.now().timestamp(),
+                         volume=1.0,
+                         price=4.0,
+                         side=Side.SELL,
+                         type=DataType.ORDER,
+                         order_type=OrderType.MARKET,
+                         instrument=_INSTRUMENT,
+                         exchange=''
+                     ),
+                     instrument=_INSTRUMENT,
+                     exchange='')
         print(ob)
         ob.add(data)
 
         data = Order(id=1,
-                    timestamp=datetime.now().timestamp(),
-                    volume=0.0,
-                    price=5.0,
-                    side=Side.SELL,
-                    type=DataType.ORDER,
-                    order_type=OrderType.STOP_LIMIT,
-                    stop_target=Order(
-                        id=1,
-                        timestamp=datetime.now().timestamp(),
-                        volume=0.5,
-                        price=5.0,
-                        side=Side.SELL,
-                        type=DataType.ORDER,
-                        instrument=_INSTRUMENT,
-                        exchange=''
-                    ),
-                    instrument=_INSTRUMENT,
-                    exchange='')
+                     timestamp=datetime.now().timestamp(),
+                     volume=0.0,
+                     price=5.0,
+                     side=Side.SELL,
+                     type=DataType.ORDER,
+                     order_type=OrderType.STOP_LIMIT,
+                     stop_target=Order(
+                         id=1,
+                         timestamp=datetime.now().timestamp(),
+                         volume=0.5,
+                         price=5.0,
+                         side=Side.SELL,
+                         type=DataType.ORDER,
+                         instrument=_INSTRUMENT,
+                         exchange=''
+                     ),
+                     instrument=_INSTRUMENT,
+                     exchange='')
         print(ob)
         ob.add(data)
 
@@ -95,14 +95,14 @@ class TestStopLoss:
         assert ob.topOfBook() == {"bid": (5.0, 1.0), "ask": (5.5, 1.0)}
 
         data = Order(id=1,
-                    timestamp=datetime.now().timestamp(),
-                    volume=0.5,
-                    price=5.0,
-                    side=Side.SELL,
-                    type=DataType.ORDER,
-                    order_type=OrderType.LIMIT,
-                    instrument=_INSTRUMENT,
-                    exchange='')
+                     timestamp=datetime.now().timestamp(),
+                     volume=0.5,
+                     price=5.0,
+                     side=Side.SELL,
+                     type=DataType.ORDER,
+                     order_type=OrderType.LIMIT,
+                     instrument=_INSTRUMENT,
+                     exchange='')
         print(ob)
         ob.add(data)
 
@@ -121,24 +121,24 @@ class TestStopLoss:
         assert ob.topOfBook() == {"bid": (5.0, 1.0), 'ask': (5.5, 1.0)}
 
         data = Order(id=1,
-                    timestamp=datetime.now().timestamp(),
-                    volume=0.0,
-                    price=5.0,
-                    side=Side.SELL,
-                    type=DataType.ORDER,
-                    order_type=OrderType.STOP_LIMIT,
-                    stop_target=Order(
-                        id=1,
-                        timestamp=datetime.now().timestamp(),
-                        volume=0.5,
-                        price=4.5,
-                        side=Side.SELL,
-                        type=DataType.ORDER,
-                        instrument=_INSTRUMENT,
-                        exchange=''
-                    ),
-                    instrument=_INSTRUMENT,
-                    exchange='')
+                     timestamp=datetime.now().timestamp(),
+                     volume=0.0,
+                     price=5.0,
+                     side=Side.SELL,
+                     type=DataType.ORDER,
+                     order_type=OrderType.STOP_LIMIT,
+                     stop_target=Order(
+                         id=1,
+                         timestamp=datetime.now().timestamp(),
+                         volume=0.5,
+                         price=4.5,
+                         side=Side.SELL,
+                         type=DataType.ORDER,
+                         instrument=_INSTRUMENT,
+                         exchange=''
+                     ),
+                     instrument=_INSTRUMENT,
+                     exchange='')
         print(ob)
         ob.add(data)
 
@@ -146,14 +146,14 @@ class TestStopLoss:
         assert ob.topOfBook() == {"bid": (5.0, 1.0), "ask": (5.5, 1.0)}
 
         data = Order(id=1,
-                    timestamp=datetime.now().timestamp(),
-                    volume=0.5,
-                    price=5.0,
-                    side=Side.SELL,
-                    type=DataType.ORDER,
-                    order_type=OrderType.LIMIT,
-                    instrument=_INSTRUMENT,
-                    exchange='')
+                     timestamp=datetime.now().timestamp(),
+                     volume=0.5,
+                     price=5.0,
+                     side=Side.SELL,
+                     type=DataType.ORDER,
+                     order_type=OrderType.LIMIT,
+                     instrument=_INSTRUMENT,
+                     exchange='')
         print(ob)
         ob.add(data)
 

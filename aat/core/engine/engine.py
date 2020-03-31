@@ -7,7 +7,7 @@ from traitlets import validate, TraitError, Unicode, Bool, List, Instance
 from tornado.web import StaticFileHandler, RedirectHandler, Application as TornadoApplication
 from perspective import PerspectiveManager, PerspectiveTornadoHandler
 
-from ..models import Event
+from ..models import Event, Error
 from ..handler import EventHandler, PrintHandler
 from ..table import TableHandler
 from ...config import EventType
@@ -148,7 +148,12 @@ class TradingEngine(Application):
             event (Event): event to send
         '''
         for handler in self._subscriptions[event.type]:
-            handler(event)
+            try:
+                handler(event)
+            except KeyboardInterrupt:
+                raise
+            except BaseException as e:
+                self.tick(Event(type=EventType.ERROR, target=Error(handler, event, e)))
 
     def start(self):
         try:
