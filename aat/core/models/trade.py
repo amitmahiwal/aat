@@ -9,9 +9,16 @@ class Trade(Data):
     maker_orders: deque
     taker_order: Order
 
-    slippage: float = 0.
-    transaction_cost: float = 0.
+    _slippage: float = 0.0
+    _transaction_cost: float = 0.0
 
+    def slippage(self):
+        '''the amount of slippage of the order'''
+        return 0.0
+
+    def transaction_cost(self):
+        '''any transaction costs incurred on the order'''
+        return 0.0
 
     def __str__(self):
         return f'<{self.instrument}-{self.volume}@{self.price}-{self.exchange}>'
