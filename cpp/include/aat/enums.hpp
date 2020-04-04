@@ -5,7 +5,7 @@
 #include <vector>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl_bind.h>
-#include "common.h"
+#include <aat/common.hpp>
 
 namespace py = pybind11;
 PYBIND11_MAKE_OPAQUE(std::vector<std::string>);
