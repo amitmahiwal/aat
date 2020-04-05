@@ -1,5 +1,5 @@
 from enum import Enum
-from ..binding import Side, InstrumentType, EventType, DataType
+from ..binding import Side, InstrumentType, EventType, DataType  # noqa: F401
 
 
 class BaseEnum(Enum):
