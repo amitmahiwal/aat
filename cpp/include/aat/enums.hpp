@@ -11,7 +11,7 @@ namespace py = pybind11;
 PYBIND11_MAKE_OPAQUE(std::vector<std::string>);
 
 namespace aat {
-namespace enums {
+namespace config {
 
     enum class EventType {
         TRADE = 0,
@@ -76,6 +76,7 @@ namespace enums {
     ENUM_FROM_STRING(EventType)
     ENUM_FROM_STRING(DataType)
 
+
     enum class ExchangeType {
         NONE = 0,
         SYNTHETIC = 1,
@@ -91,9 +92,7 @@ namespace enums {
         {"SYNTHETIC", ExchangeType::SYNTHETIC},
     };
 
-
     ENUM_TO_STRING(ExchangeType)
     ENUM_FROM_STRING(ExchangeType)
-
 }
 }

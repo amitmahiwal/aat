@@ -286,8 +286,8 @@ add_custom_command(TARGET binding POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy $<
 if(CPP_BUILD_STRICT AND NOT WIN32)
     target_compile_options(binding PRIVATE -Wall -Werror)
     target_compile_options(binding PRIVATE $<$<CONFIG:DEBUG>:-fPIC -O0>)
-    target_compile_options(_enums PRIVATE -Wall -Werror)
-    target_compile_options(_enums PRIVATE $<$<CONFIG:DEBUG>:-fPIC -O0>)
+    # target_compile_options(_enums PRIVATE -Wall -Werror)
+    # target_compile_options(_enums PRIVATE $<$<CONFIG:DEBUG>:-fPIC -O0>)
 endif()
 
 

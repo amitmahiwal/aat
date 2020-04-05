@@ -1,6 +1,8 @@
 #pragma once
+
 #include <iostream>
 #include <pybind11/pybind11.h>
+
 #include <aat/enums.hpp>
 #include <aat/order_book.hpp>
 
@@ -10,7 +12,7 @@ PYBIND11_MODULE(binding, m)
 {
     m.doc() = "C++ bindings";
 
-    using namespace aat::enums;
+    using namespace aat::config;
     py::enum_<EventType>(m, "EventType", py::arithmetic())
         .value("TRADE", EventType::TRADE)
         .value("OPEN", EventType::OPEN)
