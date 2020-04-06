@@ -50,5 +50,13 @@ namespace core {
         return ret;
     }
 
+
+    std::string
+    Event::toString() const {
+        std::stringstream ss;
+        ss << "<" << EventType_to_string(type) << "-" << target.cast<std::string>() << ">";
+        return ss.str();
+    }
+
 } // namespace core
 } // namespace aat
