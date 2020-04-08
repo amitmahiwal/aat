@@ -55,7 +55,10 @@ PYBIND11_MODULE(binding, m) {
     .export_values();
 
   using namespace aat::core;
-  py::class_<OrderBook>(m, "OrderBook").def(py::init<const std::string&>());
+  py::class_<OrderBook>(m, "OrderBook")
+    .def(py::init<Instrument&>())
+    .def(py::init<Instrument&, Exchange&>())
+    .def(py::init<Instrument&, Exchange&, std::function<void(Event&)>>());
 
   // py::class_<Exchange>(m, "Exchange")
   //     .def(py::init<const std::string&>())
