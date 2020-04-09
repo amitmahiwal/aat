@@ -7,6 +7,7 @@
 
 #include <aat/core/order_book/price_level.hpp>
 #include <aat/core/order_book/collector.hpp>
+#include <aat/core/exchange.hpp>
 #include <aat/core/models/event.hpp>
 #include <aat/core/models/order.hpp>
 
@@ -39,11 +40,13 @@ namespace core {
     PriceLevel* getTop(Side side, std::uint64_t cleared);
 
     std::function<void(Event&)> callback;
-    Collector& collector;
+    Collector collector;
     Instrument& instrument;
     Exchange& exchange;
+
     std::vector<double> buy_levels;
     std::vector<double> sell_levels;
+
     std::unordered_map<double, PriceLevel*> buys;
     std::unordered_map<double, PriceLevel*> sells;
   };
