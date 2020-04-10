@@ -30,7 +30,7 @@ jobs:
 
     - script: |
         sudo apt-get install libboost-dev
-        wget https://github.com/pybind/pybind11/archive/v2.5.0.tar.gz && tar xfzv v2.5.0.tar.gz && cd pybind11-2.5.0 && mkdir build && cd build && cmake .. -DPYBIND11_TEST=OFF && make -j4 install
+        wget https://github.com/pybind/pybind11/archive/v2.5.0.tar.gz && tar xfzv v2.5.0.tar.gz && cd pybind11-2.5.0 && mkdir build && cd build && cmake .. -DPYBIND11_TEST=OFF && sudo make -j4 install
       displayName: "System deps"
 
     - bash: npm install -g yarn
