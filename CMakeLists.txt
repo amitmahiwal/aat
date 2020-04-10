@@ -187,7 +187,6 @@ include_directories( ${Python_INCLUDE_DIRS} )
 # already found from before
 find_package(Boost)
 
-build_dep("Pybind" "${AAT_CMAKE_MODULE_PATH}/Pybind.txt.in")
 build_dep("json" "${AAT_CMAKE_MODULE_PATH}/Json.txt.in")
 build_dep("json-pybind" "${AAT_CMAKE_MODULE_PATH}/Json_pybind.txt.in")
 
