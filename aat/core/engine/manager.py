@@ -16,4 +16,3 @@ class Dispatcher(object):
 
     def request(self, order: Order):
         self._order_mgr.request(order)
-
